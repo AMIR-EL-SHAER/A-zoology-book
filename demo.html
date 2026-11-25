@@ -4,12 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#070a16">
-<title>A-ZOOLOGY — نسخة تجريبية مجانية</title>
-<meta name="description" content="تجربة مجانية بدون تسجيل: الوحدة الأولى واختبارها فقط. باقي المحتوى للمشتركين.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0px 0px 64 64'%3E%3Cdefs%3E%3Cfilter id='g'%3E%3CfeGaussianBlur stdDeviation='3' result='b'/%3E%3CfeMerge%3E%3CfeMergeNode in='b'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='%23070b1a'/%3E%3Ctext x='32' y='45' font-size='44' font-weight='900' text-anchor='middle' fill='%2300f0ff' filter='url(%23g)' font-family='Arial,sans-serif'%3EZ%3C/text%3E%3C/svg%3E">
+<title>A-ZOOLOGY — نسخة تجريبية (اليوم الأول كامل)</title>
+<meta name="description" content="نسخة تجريبية بدون تسجيل: اليوم الأول (٧ وحدات) كاملًا. باقي المحتوى للمشتركين.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23070b1a'/%3E%3Ctext x='32' y='45' font-size='44' font-weight='900' text-anchor='middle' fill='%2300f0ff' font-family='Arial,sans-serif'%3EZ%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 <style>
-/* ==== demo-only additions (no other file is touched) ==== */
 .trial-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,215,120,.45);background:rgba(255,196,64,.12);color:#ffd982;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800;margin-bottom:10px}
 .trial-note{border-color:rgba(34,229,255,.35)!important;background:linear-gradient(135deg,rgba(28,15,59,.85),rgba(7,10,22,.65))!important}
 #subTop{white-space:nowrap;border:1px solid rgba(255,213,130,.5);background:linear-gradient(135deg,#f5b942,#ffd98a);color:#1b1204;font-weight:900;box-shadow:0 6px 22px rgba(245,185,66,.25)}
@@ -24,11 +23,8 @@
 .demo-fc .back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(34,229,255,.10),rgba(140,90,255,.10)),var(--surface)}
 .demo-fc .face b{font-size:24px}
 .demo-fc .face p{margin:0;line-height:1.9;max-width:52ch}
-.hero-actions .btn{white-space:nowrap}
-@media (max-width:760px){
-  #subTop{padding:8px 10px;font-size:13px}
-  .trial-badge{font-size:11px}
-}
+.unit-nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media (max-width:760px){#subTop{padding:8px 10px;font-size:13px}.trial-badge{font-size:11px}}
 </style>
 </head>
 <body>
@@ -40,7 +36,7 @@
         <div class="logo" aria-hidden="true"><svg viewBox="0 0 48 48"><text x="24" y="34" font-size="32" font-weight="900" text-anchor="middle" fill="currentColor" font-family="Arial,sans-serif">Z</text></svg></div>
         <div>
           <h1>A-ZOOLOGY <span class="brand-dots" aria-hidden="true"><i></i><i></i><i></i></span></h1>
-          <small style="color:#ffd982;font-weight:800">نسخة تجريبية — بدون تسجيل</small>
+          <small style="color:#ffd982;font-weight:800">نسخة تجريبية — اليوم الأول</small>
         </div>
       </div>
     </div>
@@ -51,7 +47,7 @@
     <header class="topbar">
       <button class="hamburger" id="menuBtn" aria-label="فتح القائمة"></button>
       <div class="searchbox">
-        <input id="searchInput" type="search" placeholder="ابحث في الوحدة الأولى…" autocomplete="off">
+        <input id="searchInput" type="search" placeholder="ابحث في اليوم الأول…" autocomplete="off">
         <span class="s-ico" id="searchIcon"></span>
         <div class="search-results" id="searchResults"></div>
       </div>
@@ -80,19 +76,22 @@
 
 <script src="content.js"></script>
 <script>
-/* ============================================================
-   A-ZOOLOGY — standalone free demo
-   Reads content.js only. Never loads app.js or codes.js.
-   ============================================================ */
 (function () {
 'use strict';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const BOOK = window.BOOK || {};
-const U = (BOOK.units || {}).u01;
-const TERMS = (U && U.terms) || [];
-const QUIZ = (U && U.quiz) || [];
+const UNITS = BOOK.units || {};
+const UNIT_LIST = Object.keys(UNITS);
+const DAY1 = UNIT_LIST.filter(id => UNITS[id] && UNITS[id].day === 1 && UNITS[id].part === 'theory');
+const DAY1_TERMS = [];
+DAY1.forEach(id => (UNITS[id].terms || []).forEach(t => {
+  if (t && t.ar && !DAY1_TERMS.some(x => x.ar === t.ar)) DAY1_TERMS.push(Object.assign({ unit: id }, t));
+}));
+const DAY1_QUESTIONS = DAY1.reduce((n, id) => n + ((UNITS[id].quiz || []).length), 0);
+const DAY1_TERM_COUNT = DAY1_TERMS.length;
+
 const KEY = 'azoo_demo_v1';
 const TG = 'https://t.me/+201018201045?text=' + encodeURIComponent('عايز أشترك في A-ZOOLOGY');
 
@@ -122,8 +121,20 @@ const AR = '٠١٢٣٤٥٦٧٨٩';
 const arNum = n => String(n).replace(/\d/g, d => AR[+d]);
 const slug = s => String(s).trim().replace(/\s+/g,'_').replace(/[\\/:*?"<>|]/g,'');
 const audioURL = p => new URL(p, document.baseURI).href;
+const blockText = b => { if (b.t === 'img') return b.cap || ''; if (b.t === 'table') return ''; if (b.t === 'ul') return (b.items || []).join('. '); return b.x || ''; };
+const renderBlock = (b, i) => {
+  let inner = '';
+  if (b.t === 'p') inner = '<p>' + esc(b.x) + '</p>';
+  else if (b.t === 'h') inner = '<h4>' + esc(b.x) + '</h4>';
+  else if (b.t === 'note') inner = '<div class="note"><b>💡 </b>' + esc(b.x) + '</div>';
+  else if (b.t === 'def') inner = '<div class="def"><b>' + esc(b.ar) + '</b>' + (b.en ? ' <span lang="en" dir="ltr" class="en small">' + esc(b.en) + '</span>' : '') + '<br>' + esc(b.x) + '</div>';
+  else if (b.t === 'ul') inner = '<ul>' + (b.items || []).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  else if (b.t === 'table') inner = '<div class="table-wrap"><table><thead><tr>' + (b.head || []).map(x => '<th>' + esc(x) + '</th>').join('') + '</tr></thead><tbody>' + (b.rows || []).map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  else if (b.t === 'img') inner = '<figure style="margin:14px 0"><img src="' + esc(audioURL(b.src || '')) + '" alt="' + esc(b.cap || '') + '" style="width:100%;border-radius:14px;border:1px solid var(--line)"><figcaption class="small muted" style="margin-top:6px">' + esc(b.cap || '') + '</figcaption></figure>';
+  return '<div class="blk" data-i="' + i + '">' + inner + '</div>';
+};
 
-let state = { theme:'dark', card:0 };
+let state = { theme:'dark', card:0, done:{}, visited:{}, last:null };
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 document.documentElement.dataset.theme = state.theme || 'dark';
@@ -136,95 +147,48 @@ function toast(msg) {
 function subscribe(what) {
   let txt = 'عايز أشترك في A-ZOOLOGY';
   if (what) txt += ' — ' + what;
-  const url = 'https://t.me/+201018201045?text=' + encodeURIComponent(txt);
+  const url = TG;
   try { if (navigator.clipboard) navigator.clipboard.writeText(txt).catch(() => {}); } catch (e) {}
-  const w = window.open(url, '_blank');
-  if (w) { try { w.opener = null; } catch (e) {} }
-  else location.href = url;
+  const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } else location.href = url;
 }
 
-/* ---------------- sidebar ---------------- */
+/* ---------- sidebar ---------- */
 function renderSidebar() {
   const route = location.hash || '#/home';
-  const active = k => route.startsWith(k) ? 'active' : '';
+  const active = k => (route === k || route.startsWith(k + '/')) ? 'active' : '';
   const item = (label, name, go) => '<button class="nav-item ' + active(go) + '" data-go="' + go + '"><span class="ico">' + icon(name) + '</span> ' + label + '</button>';
   const locked = (label, name, what) => '<button class="nav-item" data-lock="' + esc(what) + '"><span class="ico">' + icon(name) + '</span> ' + label + ' <span class="lock-chip">' + icon('lock') + '</span></button>';
-  $('#sideNav').innerHTML =
-    item('الرئيسية','home','#/home') +
-    item('الوحدة الأولى','book','#/unit') +
-    item('اختبار الوحدة','quiz','#/quiz') +
+  let h = item('الرئيسية','home','#/home') +
+    '<div class="side-label">اليوم الأول (متاح)</div>';
+  DAY1.forEach(id => { h += item('وحدة ' + arNum(UNITS[id].no) + ' — ' + esc(UNITS[id].title), 'book', '#/unit/' + id); });
+  h += item('اختبار اليوم','quiz','#/day-quiz') +
     item('بطاقات المراجعة','cards','#/cards') +
     item('قاموس المصطلحات','lang','#/glossary') +
-    '<div class="side-label">الخطة</div>' +
-    item('اليوم الأول','calendar','#/day/1') +
+    item('خطة اليوم','calendar','#/day/1') +
+    '<div class="side-label">مقفول في التجربة</div>' +
     locked('باقي الأيام','calendar','باقي الأيام') +
-    '<div class="side-label">أقفال التجربة</div>' +
     locked('الاختبارات','quiz','الاختبارات') +
     locked('الامتحان الشامل','exam','الامتحان الشامل') +
     locked('امتحانات دمياط','archive','امتحانات دمياط') +
     locked('الجزء العملي','flask','الجزء العملي');
+  $('#sideNav').innerHTML = h;
 }
 
-/* ---------------- shared renderers ---------------- */
-function renderBlock(b, i) {
-  let inner = '';
-  if (b.t === 'p') inner = '<p>' + esc(b.x) + '</p>';
-  else if (b.t === 'h') inner = '<h4>' + esc(b.x) + '</h4>';
-  else if (b.t === 'note') inner = '<div class="note"><b>💡 </b>' + esc(b.x) + '</div>';
-  else if (b.t === 'def') inner = '<div class="def"><b>' + esc(b.ar) + '</b>' + (b.en ? ' <span lang="en" dir="ltr" class="en small">' + esc(b.en) + '</span>' : '') + '<br>' + esc(b.x) + '</div>';
-  else if (b.t === 'ul') inner = '<ul>' + (b.items || []).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
-  else if (b.t === 'table') inner = '<div class="table-wrap"><table><thead><tr>' + (b.head || []).map(x => '<th>' + esc(x) + '</th>').join('') + '</tr></thead><tbody>' + (b.rows || []).map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
-  else if (b.t === 'img') inner = '<figure style="margin:14px 0"><img src="' + esc(audioURL(b.src || '')) + '" alt="' + esc(b.cap || '') + '" style="width:100%;border-radius:14px;border:1px solid var(--line)"><figcaption class="small muted" style="margin-top:6px">' + esc(b.cap || '') + '</figcaption></figure>';
-  return '<div class="blk" data-i="' + i + '">' + inner + '</div>';
-}
-function blockText(b) {
-  if (b.t === 'img') return b.cap || '';
-  if (b.t === 'table') return '';
-  if (b.t === 'ul') return (b.items || []).join('. ');
-  return b.x || '';
-}
-function termCard(t, i) {
-  return '<div class="g-item" id="demoTerm' + i + '" data-term="' + esc(t.ar) + '">' +
-    '<div class="top"><b>' + esc(t.ar) + '</b><span lang="en" dir="ltr" class="en">' + esc(t.en || '') + '</span>' +
-    '<button class="icon-btn sm say" data-say="' + esc(t.ar) + '" title="نطق المصطلح">🔊</button></div>' +
-    '<p>' + esc(t.def) + '</p></div>';
-}
-function renderQuestions(qs) {
-  return qs.map((q, i) =>
-    '<div class="q-card" data-q="' + i + '">' +
-      '<div class="q-head"><div class="q-no">' + arNum(i + 1) + '</div><div class="q-text">' + esc(q.q) + '</div></div>' +
-      '<div class="opts">' + q.o.map((o, j) => '<div class="opt" data-q="' + i + '" data-o="' + j + '"><span class="key">' + ('أبجد'[j] || (j + 1)) + '</span><span>' + esc(o) + '</span></div>').join('') + '</div>' +
-      '<div class="explain" id="dq_e' + i + '">' + (q.e ? '💡 ' + esc(q.e) : '') + '</div>' +
-    '</div>').join('');
-}
-
-/* ---------------- term audio (same behaviour as full app) ---------------- */
+/* ---------- term audio ---------- */
+const termMap = new Map(); DAY1_TERMS.forEach(t => { if (t.ar) termMap.set(t.ar.trim(), t); });
+const TERM_KEYS = DAY1_TERMS.map(t => t.ar).filter(Boolean).sort((a, b) => b.length - a.length);
 let termAudio = null, termTimer = null, termSeq = 0, audioUnlocked = false, audioFailNotified = false;
 function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  try {
-    const a = new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAAAAAAAAAAAAAA==');
-    const p = a.play();
-    if (p && p.catch) p.catch(() => {}).then(() => a.pause());
-  } catch (e) {}
+  if (audioUnlocked) return; audioUnlocked = true;
+  try { const a = new Audio('data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQgAAAAAAAAAAAAAAA=='); const p = a.play(); if (p && p.catch) p.catch(() => {}).then(() => a.pause()); } catch (e) {}
 }
 ['pointerdown','touchstart'].forEach(ev => document.addEventListener(ev, unlockAudio, { once:true, passive:true }));
-function audioFail(src, err) {
-  console.warn('[demo audio] missing/failed:', src, err || '');
-  if (!audioFailNotified) {
-    audioFailNotified = true;
-    toast('تعذّر تشغيل الصوت — تأكد من رفع مجلد audio على الاستضافة');
-  }
-}
+function audioFail(src, err) { console.warn('[demo audio]', src, err || ''); if (!audioFailNotified) { audioFailNotified = true; toast('تعذّر تشغيل الصوت — تأكد من رفع مجلد audio'); } }
 function speakTerm(t) {
   if (!t) return;
-  const token = ++termSeq;
-  clearTimeout(termTimer); termTimer = null;
-  unlockAudio();
+  const token = ++termSeq; clearTimeout(termTimer); termTimer = null; unlockAudio();
   if (!termAudio) termAudio = new Audio();
-  termAudio.pause(); termAudio.onended = null; termAudio.onerror = null;
-  termAudio.removeAttribute('src');
+  termAudio.pause(); termAudio.onended = null; termAudio.onerror = null; termAudio.removeAttribute('src');
   try { termAudio.load(); } catch (e) {}
   const key = encodeURI(slug(t.ar));
   const steps = ['audio/term-en-' + key + '.mp3', 'audio/term-' + key + '.mp3', 'audio/term-def-' + key + '.mp3'];
@@ -234,85 +198,16 @@ function speakTerm(t) {
     if (token !== termSeq || i >= steps.length) return;
     const src = steps[i++];
     let settled = false;
-    const done = () => {
-      if (settled || token !== termSeq) return;
-      settled = true;
-      termAudio.onended = null; termAudio.onerror = null;
-      if (i < steps.length) queue(400);
-    };
-    termAudio.onended = done;
-    termAudio.onerror = () => { audioFail(src); done(); };
+    const done = () => { if (settled || token !== termSeq) return; settled = true; termAudio.onended = null; termAudio.onerror = null; if (i < steps.length) queue(400); };
+    termAudio.onended = done; termAudio.onerror = () => { audioFail(src); done(); };
     try {
-      termAudio.src = audioURL(src);
-      termAudio.load();
+      termAudio.src = audioURL(src); termAudio.load();
       const p = termAudio.play();
-      if (p && p.catch) p.catch(err => {
-        if (err && err.name === 'AbortError') return;
-        if (err && err.name === 'NotAllowedError' && !audioFailNotified) {
-          audioFailNotified = true; toast('اضغط على المصطلح مرة ثانية لتفعيل الصوت');
-        } else audioFail(src, err);
-        done();
-      });
+      if (p && p.catch) p.catch(err => { if (err && err.name === 'AbortError') return; if (err && err.name === 'NotAllowedError' && !audioFailNotified) { audioFailNotified = true; toast('اضغط على المصطلح مرة ثانية لتفعيل الصوت'); } else audioFail(src, err); done(); });
     } catch (err) { audioFail(src, err); done(); }
   };
   run();
 }
-
-/* ---------------- unit reading audio ---------------- */
-const player = $('#player');
-const unitAudio = new Audio();
-let pl = null, ttsUtter = null;
-function playCurrent() {
-  if (!pl || pl.i >= pl.items.length) return stopAudio();
-  const item = pl.items[pl.i];
-  const el = $('#blocks .blk[data-i="' + item.i + '"]');
-  if (el) { $$('#blocks .blk').forEach(x => x.classList.remove('playing')); el.classList.add('playing'); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
-  $('#playerTitle').textContent = U.title + ' — ' + (pl.i + 1) + '/' + pl.items.length;
-  unitAudio.src = audioURL('audio/' + U.id + '-' + item.i + '.mp3');
-  unitAudio.playbackRate = +$('#speedSel').value || 1;
-  unitAudio.onended = () => { pl.i++; playCurrent(); };
-  unitAudio.onerror = () => speakFallback(item);
-  unitAudio.play().then(() => { $('#playBtn').textContent = '❚❚'; }).catch(() => speakFallback(item));
-}
-function speakFallback(item) {
-  if (!('speechSynthesis' in window)) { pl.i++; return playCurrent(); }
-  speechSynthesis.cancel();
-  ttsUtter = new SpeechSynthesisUtterance(blockText(item.b));
-  ttsUtter.lang = 'ar-EG'; ttsUtter.rate = +$('#speedSel').value || 1;
-  const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.indexOf('ar') === 0);
-  if (v) ttsUtter.voice = v;
-  ttsUtter.onend = () => { pl.i++; playCurrent(); };
-  speechSynthesis.speak(ttsUtter);
-  $('#playBtn').textContent = '❚❚';
-}
-function startUnitAudio() {
-  const items = (U.blocks || []).map((b, i) => ({ b, i })).filter(x => blockText(x.b).trim().length > 1);
-  if (!items.length) return toast('لا يوجد نص للقراءة');
-  stopAudio();
-  pl = { items, i:0 };
-  player.classList.add('on');
-  playCurrent();
-}
-function stopAudio() {
-  unitAudio.pause(); unitAudio.removeAttribute('src');
-  if ('speechSynthesis' in window) speechSynthesis.cancel();
-  $$('#blocks .blk').forEach(x => x.classList.remove('playing'));
-  player.classList.remove('on');
-  $('#playerTitle').textContent = '—';
-  $('#playBtn').textContent = '▶';
-  pl = null;
-}
-$('#playBtn').onclick = () => {
-  if (!pl) return toast('اضغط «استمع للوحدة» أولاً');
-  if (unitAudio.paused) unitAudio.play().then(() => { $('#playBtn').textContent = '❚❚'; }).catch(() => {});
-  else { unitAudio.pause(); $('#playBtn').textContent = '▶'; }
-};
-$('#closePlayer').onclick = stopAudio;
-$('#speedSel').onchange = () => { unitAudio.playbackRate = +$('#speedSel').value || 1; };
-
-/* ---------------- term linking inside text ---------------- */
-const TERM_KEYS = TERMS.map(t => t.ar).filter(Boolean).sort((a, b) => b.length - a.length);
-const termMap = new Map(); TERMS.forEach(t => { if (t.ar) termMap.set(t.ar.trim(), t); });
 function linkTerms(root) {
   if (!root) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -332,10 +227,7 @@ function linkTerms(root) {
     if (!ranges.length) return;
     ranges.sort((a, b) => a[0] - b[0]);
     let html = '', pos = 0;
-    ranges.forEach(([s, e, key]) => {
-      html += esc(text.slice(pos, s)) + '<span class="term" data-term="' + esc(key) + '" title="اضغط لسماع المصطلح">' + esc(text.slice(s, e)) + '</span>';
-      pos = e;
-    });
+    ranges.forEach(([s, e, key]) => { html += esc(text.slice(pos, s)) + '<span class="term" data-term="' + esc(key) + '" title="اضغط لسماع المصطلح">' + esc(text.slice(s, e)) + '</span>'; pos = e; });
     html += esc(text.slice(pos));
     const span = document.createElement('span'); span.innerHTML = html;
     node.parentNode.replaceChild(span, node);
@@ -343,73 +235,79 @@ function linkTerms(root) {
   $$('.term', root).forEach(el => el.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); speakTerm(termMap.get(el.dataset.term)); }));
 }
 
-/* ---------------- views ---------------- */
+/* ---------- unit audio ---------- */
+const player = $('#player');
+const unitAudio = new Audio();
+let pl = null, ttsUtter = null;
+function playCurrent() {
+  if (!pl || pl.i >= pl.items.length) return stopAudio();
+  const item = pl.items[pl.i];
+  const el = $('#blocks .blk[data-i="' + item.i + '"]');
+  if (el) { $$('#blocks .blk').forEach(x => x.classList.remove('playing')); el.classList.add('playing'); el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+  $('#playerTitle').textContent = pl.title + ' — ' + (pl.i + 1) + '/' + pl.items.length;
+  unitAudio.src = audioURL('audio/' + pl.id + '-' + item.i + '.mp3');
+  unitAudio.playbackRate = +$('#speedSel').value || 1;
+  unitAudio.onended = () => { pl.i++; playCurrent(); };
+  unitAudio.onerror = () => speakFallback(item);
+  unitAudio.play().then(() => { $('#playBtn').textContent = '❚❚'; }).catch(() => speakFallback(item));
+}
+function speakFallback(item) {
+  if (!('speechSynthesis' in window)) { pl.i++; return playCurrent(); }
+  speechSynthesis.cancel();
+  ttsUtter = new SpeechSynthesisUtterance(blockText(item.b));
+  ttsUtter.lang = 'ar-EG'; ttsUtter.rate = +$('#speedSel').value || 1;
+  const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.indexOf('ar') === 0);
+  if (v) ttsUtter.voice = v;
+  ttsUtter.onend = () => { pl.i++; playCurrent(); };
+  speechSynthesis.speak(ttsUtter);
+  $('#playBtn').textContent = '❚❚';
+}
+function startUnitAudio(id, title, blocks) {
+  const items = (blocks || []).map((b, i) => ({ b, i })).filter(x => blockText(x.b).trim().length > 1);
+  if (!items.length) return toast('لا يوجد نص للقراءة');
+  stopAudio();
+  pl = { id, title, items, i: 0 };
+  player.classList.add('on');
+  playCurrent();
+}
+function stopAudio() {
+  unitAudio.pause(); unitAudio.removeAttribute('src');
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  $$('#blocks .blk').forEach(x => x.classList.remove('playing'));
+  player.classList.remove('on');
+  $('#playerTitle').textContent = '—';
+  $('#playBtn').textContent = '▶';
+  pl = null;
+}
+$('#playBtn').onclick = () => {
+  if (!pl) return toast('اضغط «استمع للوحدة» أولاً');
+  if (unitAudio.paused) unitAudio.play().then(() => { $('#playBtn').textContent = '❚❚'; }).catch(() => {});
+  else { unitAudio.pause(); $('#playBtn').textContent = '▶'; }
+};
+$('#closePlayer').onclick = stopAudio;
+$('#speedSel').onchange = () => { if (unitAudio) unitAudio.playbackRate = +$('#speedSel').value || 1; };
+
+/* ---------- views ---------- */
 const view = $('#view');
 function shell(inner) { stopAudio(); view.innerHTML = inner; window.scrollTo({ top:0, behavior:'instant' }); }
 const subBanner = () => '<div class="card trial-note" style="margin-top:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">' +
-  '<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px">✦ جرّبت الوحدة الأولى؟</h3><p class="muted small" style="margin:0">افتح كل الوحدات والاختبارات والامتحانات السابقة باشتراك واحد.</p></div>' +
+  '<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px">✦ جرّبت اليوم الأول؟</h3><p class="muted small" style="margin:0">افتح باقي الأيام والامتحانات والجزء العملي باشتراك واحد.</p></div>' +
   '<button class="btn" data-lock="الاشتراك">اشترك الآن على تليجرام</button></div>';
 
-function viewHome() {
-  shell(
-    '<section class="hero">' +
-      '<div class="hero-dots" aria-hidden="true"><i></i><i></i><i></i></div>' +
-      '<div class="trial-badge">تجربة مجانية — بدون تسجيل ولا كود</div>' +
-      '<h2>مقرر الحيوان العام</h2>' +
-      '<p>نسخة تجريبية كاملة الواجهة: كل الأيقونات والصفحات شغالة، والمتاح للقراءة والاستماع هو <b>الوحدة الأولى واختبارها</b> فقط.</p>' +
-      '<div class="hero-meta"><span class="pill">' + arNum(1) + ' وحدة متاحة</span><span class="pill">' + arNum(TERMS.length) + ' مصطلح</span><span class="pill">' + arNum(QUIZ.length) + ' سؤال</span></div>' +
-      '<div class="hero-actions"><button class="btn light" data-go="#/unit">ابدأ الوحدة الأولى ←</button><button class="btn ghost" data-go="#/quiz">اختبار الوحدة</button><button class="btn ghost" data-lock="الاشتراك">✦ اشترك</button></div>' +
-    '</section>' +
-    '<div class="grid g4" style="margin-bottom:18px">' +
-      '<div class="card stat"><span class="num">' + arNum(1) + '</span><span class="lbl">وحدة متاحة</span></div>' +
-      '<div class="card stat"><span class="num">' + arNum(TERMS.length) + '</span><span class="lbl">مصطلح</span></div>' +
-      '<div class="card stat"><span class="num">' + arNum(QUIZ.length) + '</span><span class="lbl">سؤال تجريبي</span></div>' +
-      '<div class="card stat"><span class="num">0</span><span class="lbl">مطلوب تسجيل</span></div>' +
-    '</div>' +
-    '<h3 style="margin:8px 0 12px">متاح لك الآن</h3>' +
-    '<div class="grid g2">' +
-      '<button class="card" data-go="#/unit" style="text-align:right"><h3>' + icon('book') + ' الوحدة الأولى</h3><p class="muted small" style="margin:0">' + esc(U ? U.title : '') + ' — شرح وصوت ومصطلحات.</p></button>' +
-      '<button class="card" data-go="#/quiz" style="text-align:right"><h3>' + icon('quiz') + ' اختبار الوحدة الأولى</h3><p class="muted small" style="margin:0">' + arNum(QUIZ.length) + ' أسئلة مع تصحيح فوري.</p></button>' +
-      '<button class="card" data-go="#/cards" style="text-align:right"><h3>' + icon('cards') + ' بطاقات المراجعة</h3><p class="muted small" style="margin:0">' + arNum(TERMS.length) + ' بطاقات من الوحدة الأولى.</p></button>' +
-      '<button class="card" data-go="#/glossary" style="text-align:right"><h3>' + icon('lang') + ' قاموس المصطلحات</h3><p class="muted small" style="margin:0">النطق بالإنجليزية ثم العربية ثم الشرح.</p></button>' +
-    '</div>' +
-    '<h3 style="margin:26px 0 12px">مقفول في التجربة</h3>' +
-    '<div class="grid g4">' +
-      '<button class="card locked-card" data-lock="باقي الوحدات" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>باقي الوحدات</h3><p class="muted small" style="margin:0">من الوحدة الثانية إلى آخر الكتاب.</p></button>' +
-      '<button class="card locked-card" data-lock="الامتحان الشامل" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>الامتحان الشامل</h3><p class="muted small" style="margin:0">٧٧ سؤالًا + أسئلة مقالية.</p></button>' +
-      '<button class="card locked-card" data-lock="امتحانات دمياط" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>امتحانات دمياط</h3><p class="muted small" style="margin:0">نماذج ٢٠١٦–٢٠٢٥.</p></button>' +
-      '<button class="card locked-card" data-lock="الجزء العملي" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>الجزء العملي</h3><p class="muted small" style="margin:0">الأنسجة والشرائح والصور.</p></button>' +
-    '</div>' + subBanner()
-  );
-}
+const termCard = (t, i) => '<div class="g-item" id="demoTerm' + i + '" data-term="' + esc(t.ar) + '">' +
+  '<div class="top"><b>' + esc(t.ar) + '</b><span lang="en" dir="ltr" class="en">' + esc(t.en || '') + '</span>' +
+  '<button class="icon-btn sm say" data-say="' + esc(t.ar) + '" title="نطق المصطلح">🔊</button></div>' +
+  '<p>' + esc(t.def) + '</p></div>';
 
-function viewUnit() {
-  if (!U) return viewLocked('الوحدة الأولى');
-  shell(
-    '<div class="reader" id="reader">' +
-      '<div class="crumbs"><a href="#/home">الرئيسية</a> / اليوم الأول / الوحدة ' + arNum(U.no) + '</div>' +
-      '<h1>' + esc(U.title) + '</h1>' +
-      '<div><span lang="en" dir="ltr" class="en">' + esc(U.titleEn || '') + '</span></div>' +
-      '<div class="reader-meta"><span class="tag accent">نظري</span>' + (U.pages ? '<span class="tag">ص ' + esc(U.pages) + '</span>' : '') + (U.minutes ? '<span class="tag">' + arNum(U.minutes) + ' دقيقة</span>' : '') + '</div>' +
-      '<div class="unit-bar"><div class="row"><button class="btn soft sm" id="listenBtn">🔊 استمع للوحدة</button><button class="btn outline sm" id="printBtn">🖨 طباعة</button><span class="lock-chip">' + icon('check') + ' متاح في التجربة</span></div></div>' +
-      (U.summary ? '<div class="summary"><h3>الخلاصة في سطور</h3><p>' + esc(U.summary) + '</p></div>' : '') +
-      '<div id="blocks">' + (U.blocks || []).map(renderBlock).join('') + '</div>' +
-      '<h3 style="margin:26px 0 12px">مصطلحات الوحدة</h3>' +
-      '<div class="grid g2">' + TERMS.map(termCard).join('') + '</div>' +
-      '<h3 style="margin:26px 0 12px">اختبار الوحدة الأولى</h3>' +
-      '<div class="card"><div class="q-tools"><span id="quizScore" class="small muted">أجب عن الأسئلة ثم اضغط عرض النتيجة</span><button class="btn sm" id="checkQuiz">عرض النتيجة</button><button class="btn outline sm" id="resetQuiz">إعادة</button></div>' +
-      renderQuestions(QUIZ) + '</div>' +
-      '<div class="card locked-card" style="margin-top:18px"><span class="lock-chip">' + icon('lock') + ' للمشتركين</span><h3>الوحدة الثانية: ' + esc(((BOOK.units || {}).u02 || {}).title || 'الفروع الرئيسية') + '</h3><p class="muted small">اشترك لفتح باقي الوحدات واختباراتها.</p><button class="btn sm" data-lock="الوحدة الثانية">اشترك الآن</button></div>' +
-    '</div>'
-  );
-  $('#listenBtn').onclick = startUnitAudio;
-  $('#printBtn').onclick = () => window.print();
-  $$('[data-say]', view).forEach(el => el.addEventListener('click', e => { e.stopPropagation(); speakTerm(termMap.get(el.dataset.say)); }));
-  linkTerms($('#blocks')); linkTerms($('.summary'));
-  bindQuiz();
+function renderQuestions(qs, prefix) {
+  return qs.map((q, i) =>
+    '<div class="q-card" data-q="' + i + '">' +
+      '<div class="q-head"><div class="q-no">' + arNum(i + 1) + '</div><div class="q-text">' + esc(q.q) + '</div></div>' +
+      '<div class="opts">' + q.o.map((o, j) => '<div class="opt" data-q="' + i + '" data-o="' + j + '"><span class="key">' + ('أبجد'[j] || (j + 1)) + '</span><span>' + esc(o) + '</span></div>').join('') + '</div>' +
+      '<div class="explain" id="' + prefix + '_e' + i + '">' + (q.e ? '💡 ' + esc(q.e) : '') + '</div>' +
+    '</div>').join('');
 }
-
-function bindQuiz() {
+function bindQuiz(qs, prefix) {
   const answered = {};
   $$('.opt', view).forEach(el => el.addEventListener('click', () => {
     const qi = +el.dataset.q, oi = +el.dataset.o;
@@ -418,92 +316,202 @@ function bindQuiz() {
     const card = el.closest('.q-card');
     $$('.opt', card).forEach(x => x.classList.remove('sel'));
     el.classList.add('sel');
-    const q = QUIZ[qi];
+    const q = qs[qi];
     $$('.opt', card).forEach(x => {
       const j = +x.dataset.o;
       if (j === q.a) x.classList.add('correct');
       else if (j === oi) x.classList.add('wrong');
     });
-    $('#dq_e' + qi)?.classList.add('show');
-    let score = 0; QUIZ.forEach((qq, i) => { if (answered[i] === qq.a) score++; });
-    $('#quizScore').textContent = 'أجبت عن ' + arNum(Object.keys(answered).length) + ' من ' + arNum(QUIZ.length);
+    $('#' + prefix + '_e' + qi)?.classList.add('show');
+    let score = 0; qs.forEach((qq, i) => { if (answered[i] === qq.a) score++; });
+    $('#quizScore').textContent = 'أجبت عن ' + arNum(Object.keys(answered).length) + ' من ' + arNum(qs.length);
   }));
   $('#checkQuiz').onclick = () => {
-    let score = 0; QUIZ.forEach((q, i) => { if (answered[i] === q.a) score++; });
-    $('#quizScore').innerHTML = 'نتيجتك: <b>' + arNum(score) + ' / ' + arNum(QUIZ.length) + '</b>';
-    toast('نتيجتك ' + arNum(score) + ' من ' + arNum(QUIZ.length));
+    let score = 0; qs.forEach((q, i) => { if (answered[i] === q.a) score++; });
+    $('#quizScore').innerHTML = 'نتيجتك: <b>' + arNum(score) + ' / ' + arNum(qs.length) + '</b>';
+    toast('نتيجتك ' + arNum(score) + ' من ' + arNum(qs.length));
   };
-  $('#resetQuiz').onclick = () => viewQuiz();
+  $('#resetQuiz').onclick = () => {
+    const u = (location.hash.split('/')[1] || '');
+    if (u.startsWith('u')) viewUnit(u); else viewDayQuiz();
+  };
 }
 
-function viewQuiz() {
-  shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / اختبار الوحدة الأولى</div>' +
-    '<span class="trial-badge">متاح في التجربة</span><h1>اختبار الوحدة الأولى</h1>' +
-    '<p class="muted">' + arNum(QUIZ.length) + ' أسئلة — التصحيح فوري مع شرح الإجابة.</p>' +
+function viewHome() {
+  const unitsHtml = DAY1.map(id => '<button class="card" data-go="#/unit/' + id + '" style="text-align:right"><h3>' + icon('book') + ' وحدة ' + arNum(UNITS[id].no) + '</h3><p class="muted small" style="margin:0">' + esc(UNITS[id].title) + '</p></button>').join('');
+  shell(
+    '<section class="hero">' +
+      '<div class="hero-dots" aria-hidden="true"><i></i><i></i><i></i></div>' +
+      '<div class="trial-badge">نسخة تجريبية — اليوم الأول كامل (بدون تسجيل)</div>' +
+      '<h2>مقرر الحيوان العام</h2>' +
+      '<p>جرّب <b>اليوم الأول (٧ وحدات)</b> بالكامل: شرح + صوت + مصطلحات + اختبارات + بطاقات مراجعة + خطة. باقي الأيام والامتحانات مقفولة للمشتركين.</p>' +
+      '<div class="hero-meta"><span class="pill">' + arNum(DAY1.length) + ' وحدات متاحة</span><span class="pill">' + arNum(DAY1_TERM_COUNT) + ' مصطلح</span><span class="pill">' + arNum(DAY1_QUESTIONS) + ' سؤال</span><span class="pill">١ يوم</span></div>' +
+      '<div class="hero-actions"><button class="btn light" data-go="#/unit/' + DAY1[0] + '">ابدأ الوحدة ١ ←</button><button class="btn ghost" data-go="#/day-quiz">اختبار اليوم</button><button class="btn ghost" data-lock="الاشتراك">✦ اشترك</button></div>' +
+    '</section>' +
+    '<div class="grid g4" style="margin-bottom:18px">' +
+      '<div class="card stat"><span class="num">' + arNum(DAY1.length) + '</span><span class="lbl">وحدة متاحة</span></div>' +
+      '<div class="card stat"><span class="num">' + arNum(DAY1_TERM_COUNT) + '</span><span class="lbl">مصطلح</span></div>' +
+      '<div class="card stat"><span class="num">' + arNum(DAY1_QUESTIONS) + '</span><span class="lbl">سؤال</span></div>' +
+      '<div class="card stat"><span class="num">٧</span><span class="lbl">أيام مقفولة</span></div>' +
+    '</div>' +
+    '<h3 style="margin:8px 0 12px">وحدات اليوم الأول</h3>' +
+    '<div class="grid g3">' + unitsHtml + '</div>' +
+    '<h3 style="margin:26px 0 12px">أدوات اليوم الأول</h3>' +
+    '<div class="grid g4">' +
+      '<button class="card" data-go="#/day-quiz" style="text-align:right"><h3>' + icon('quiz') + ' اختبار اليوم</h3><p class="muted small" style="margin:0">' + arNum(DAY1_QUESTIONS) + ' سؤال (كل وحدات اليوم).</p></button>' +
+      '<button class="card" data-go="#/cards" style="text-align:right"><h3>' + icon('cards') + ' بطاقات المراجعة</h3><p class="muted small" style="margin:0">' + arNum(DAY1_TERM_COUNT) + ' بطاقة.</p></button>' +
+      '<button class="card" data-go="#/glossary" style="text-align:right"><h3>' + icon('lang') + ' قاموس المصطلحات</h3><p class="muted small" style="margin:0">النطق: EN ← AR ← الشرح.</p></button>' +
+      '<button class="card" data-go="#/day/1" style="text-align:right"><h3>' + icon('calendar') + ' خطة اليوم</h3><p class="muted small" style="margin:0">المهام والوحدات.</p></button>' +
+    '</div>' +
+    '<h3 style="margin:26px 0 12px">مقفول في التجربة</h3>' +
+    '<div class="grid g4">' +
+      '<button class="card locked-card" data-lock="باقي الوحدات" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>باقي الوحدات</h3><p class="muted small" style="margin:0">من الوحدة ٨ إلى ٥٧.</p></button>' +
+      '<button class="card locked-card" data-lock="الامتحان الشامل" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>الامتحان الشامل</h3><p class="muted small" style="margin:0">٧٧ سؤال + مقالية.</p></button>' +
+      '<button class="card locked-card" data-lock="امتحانات دمياط" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>امتحانات دمياط</h3><p class="muted small" style="margin:0">نماذج ٢٠١٦–٢٠٢٥.</p></button>' +
+      '<button class="card locked-card" data-lock="الجزء العملي" style="text-align:right"><span class="lock-chip">' + icon('lock') + ' اشترك</span><h3>الجزء العملي</h3><p class="muted small" style="margin:0">الأنسجة والشرائح والصور.</p></button>' +
+    '</div>' + subBanner()
+  );
+}
+
+function viewUnit(id) {
+  if (!DAY1.includes(id)) return viewLocked('الوحدة ' + id.toUpperCase());
+  const u = UNITS[id];
+  const idx = DAY1.indexOf(id);
+  const prev = idx > 0 ? DAY1[idx - 1] : null;
+  const next = idx < DAY1.length - 1 ? DAY1[idx + 1] : null;
+  const termsHtml = (u.terms || []).map(t => {
+    const gi = DAY1_TERMS.findIndex(x => x.ar === t.ar);
+    return termCard(t, gi >= 0 ? gi : 0);
+  }).join('');
+  shell(
+    '<div class="reader" id="reader">' +
+      '<div class="crumbs"><a href="#/home">الرئيسية</a> / اليوم ١ / الوحدة ' + arNum(u.no) + '</div>' +
+      '<h1>' + esc(u.title) + '</h1>' +
+      '<div><span lang="en" dir="ltr" class="en">' + esc(u.titleEn || '') + '</span></div>' +
+      '<div class="reader-meta"><span class="tag accent">نظري</span>' + (u.pages ? '<span class="tag">ص ' + esc(u.pages) + '</span>' : '') + (u.minutes ? '<span class="tag">' + arNum(u.minutes) + ' دقيقة</span>' : '') + '</div>' +
+      '<div class="unit-bar"><div class="row"><button class="btn soft sm" id="listenBtn">🔊 استمع للوحدة</button><button class="btn outline sm" id="printBtn">🖨 طباعة</button><span class="lock-chip">' + icon('check') + ' متاح في التجربة</span></div></div>' +
+      (u.summary ? '<div class="summary"><h3>الخلاصة في سطور</h3><p>' + esc(u.summary) + '</p></div>' : '') +
+      '<div id="blocks">' + (u.blocks || []).map(renderBlock).join('') + '</div>' +
+      '<h3 style="margin:26px 0 12px">مصطلحات الوحدة</h3>' +
+      '<div class="grid g2">' + termsHtml + '</div>' +
+      (u.quiz && u.quiz.length ? '<h3 style="margin:26px 0 12px">اختبار الوحدة</h3><div class="card"><div class="q-tools"><span id="quizScore" class="small muted">أجب عن الأسئلة ثم اضغط عرض النتيجة</span><button class="btn sm" id="checkQuiz">عرض النتيجة</button><button class="btn outline sm" id="resetQuiz">إعادة</button></div>' + renderQuestions(u.quiz, 'uq_' + id) + '</div>' : '') +
+      '<div class="unit-nav">' +
+        (prev ? '<button class="btn outline sm" data-go="#/unit/' + prev + '">← الوحدة ' + arNum(UNITS[prev].no) + '</button>' : '') +
+        (next ? '<button class="btn soft sm" data-go="#/unit/' + next + '">الوحدة ' + arNum(UNITS[next].no) + ' →</button>' : '<button class="btn sm" data-lock="باقي الوحدات">' + icon('lock') + ' الوحدة التالية (اشترك)</button>') +
+      '</div>' +
+    '</div>'
+  );
+  $('#listenBtn').onclick = () => startUnitAudio(id, u.title, u.blocks);
+  $('#printBtn').onclick = () => window.print();
+  $$('[data-say]', view).forEach(el => el.addEventListener('click', e => { e.stopPropagation(); speakTerm(termMap.get(el.dataset.say)); }));
+  linkTerms($('#blocks')); linkTerms($('.summary'));
+  if (u.quiz && u.quiz.length) bindQuiz(u.quiz, 'uq_' + id);
+  state.last = id; state.visited[id] = true; save();
+}
+
+function bindQuiz(qs, prefix) {
+  const answered = {};
+  $$('.opt', view).forEach(el => el.addEventListener('click', () => {
+    const qi = +el.dataset.q, oi = +el.dataset.o;
+    if (answered[qi] !== undefined) return;
+    answered[qi] = oi;
+    const card = el.closest('.q-card');
+    $$('.opt', card).forEach(x => x.classList.remove('sel'));
+    el.classList.add('sel');
+    const q = qs[qi];
+    $$('.opt', card).forEach(x => {
+      const j = +x.dataset.o;
+      if (j === q.a) x.classList.add('correct');
+      else if (j === oi) x.classList.add('wrong');
+    });
+    $('#' + prefix + '_e' + qi)?.classList.add('show');
+    let score = 0; qs.forEach((qq, i) => { if (answered[i] === qq.a) score++; });
+    $('#quizScore').textContent = 'أجبت عن ' + arNum(Object.keys(answered).length) + ' من ' + arNum(qs.length);
+  }));
+  $('#checkQuiz').onclick = () => {
+    let score = 0; qs.forEach((q, i) => { if (answered[i] === q.a) score++; });
+    $('#quizScore').innerHTML = 'نتيجتك: <b>' + arNum(score) + ' / ' + arNum(qs.length) + '</b>';
+    toast('نتيجتك ' + arNum(score) + ' من ' + arNum(qs.length));
+  };
+  $('#resetQuiz').onclick = () => {
+    const hash = location.hash;
+    if (hash.startsWith('#/unit/')) viewUnit(hash.replace('#/unit/', ''));
+    else viewDayQuiz();
+  };
+}
+
+function viewDayQuiz() {
+  const ids = DAY1;
+  const qs = [];
+  ids.forEach(id => (UNITS[id].quiz || []).forEach(q => qs.push(q)));
+  shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / اختبار اليوم ١</div>' +
+    '<span class="trial-badge">متاح في التجربة</span><h1>اختبار اليوم ١</h1>' +
+    '<p class="muted">' + arNum(qs.length) + ' سؤال — جميع وحدات اليوم. التصحيح فوري.</p>' +
     '<div class="card"><div class="q-tools"><span id="quizScore" class="small muted">أجب عن الأسئلة ثم اضغط عرض النتيجة</span><button class="btn sm" id="checkQuiz">عرض النتيجة</button><button class="btn outline sm" id="resetQuiz">إعادة</button></div>' +
-    renderQuestions(QUIZ) + '</div>' + subBanner() + '</div>');
-  bindQuiz();
+    renderQuestions(qs, 'dq_1') + '</div>' + subBanner() + '</div>');
+  bindQuiz(qs, 'dq_1');
 }
 
 function viewCards() {
-  let flipped = false;
-  const i = Math.max(0, Math.min(TERMS.length - 1, +state.card || 0));
-  const t = TERMS[i] || {};
+  let deck = DAY1_TERMS.slice();
+  const i = Math.max(0, Math.min(deck.length - 1, +state.card || 0));
+  const t = deck[i] || {};
   shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / بطاقات المراجعة</div>' +
-    '<span class="trial-badge">بطاقات الوحدة الأولى فقط</span><h1>بطاقات المراجعة</h1>' +
+    '<span class="trial-badge">بطاقات اليوم ١</span><h1>بطاقات المراجعة</h1>' +
     '<p class="muted">اضغط على البطاقة لقلبها، أو على 🔊 لسماع المصطلح.</p>' +
     '<div class="demo-fc" id="fc"><div class="inner">' +
-      '<div class="face front"><span class="lock-chip">' + arNum(i + 1) + ' / ' + arNum(TERMS.length) + '</span><b>' + esc(t.ar) + '</b><span lang="en" dir="ltr" class="en">' + esc(t.en || '') + '</span><small class="muted">اضغط لعرض الشرح</small></div>' +
+      '<div class="face front"><span class="lock-chip">' + arNum(i + 1) + ' / ' + arNum(deck.length) + '</span><b>' + esc(t.ar) + '</b><span lang="en" dir="ltr" class="en">' + esc(t.en || '') + '</span><small class="muted">اضغط لعرض الشرح</small></div>' +
       '<div class="face back"><b>' + esc(t.ar) + '</b><p>' + esc(t.def) + '</p><small class="muted">اضغط للعودة</small></div>' +
     '</div></div>' +
     '<div class="row" style="margin-top:16px;justify-content:center"><button class="btn outline sm" id="prevCard">← السابقة</button><button class="btn sm" id="sayCard">🔊 اسمع النطق</button><button class="btn outline sm" id="nextCard">التالية →</button></div>' + subBanner() + '</div>');
   const fc = $('#fc');
-  fc.onclick = () => { fc.classList.toggle('flipped'); flipped = fc.classList.contains('flipped'); if (flipped) speakTerm(t); };
+  fc.onclick = () => { fc.classList.toggle('flipped'); if (fc.classList.contains('flipped')) speakTerm(t); };
   $('#sayCard').onclick = e => { e.stopPropagation(); speakTerm(t); };
-  $('#prevCard').onclick = () => { state.card = (i - 1 + TERMS.length) % TERMS.length; save(); viewCards(); };
-  $('#nextCard').onclick = () => { state.card = (i + 1) % TERMS.length; save(); viewCards(); };
+  $('#prevCard').onclick = () => { state.card = (i - 1 + deck.length) % deck.length; save(); viewCards(); };
+  $('#nextCard').onclick = () => { state.card = (i + 1) % deck.length; save(); viewCards(); };
 }
 
 function viewGlossary() {
   shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / قاموس المصطلحات</div>' +
-    '<span class="trial-badge">مصطلحات الوحدة الأولى</span><h1>قاموس المصطلحات</h1>' +
+    '<span class="trial-badge">مصطلحات اليوم ١</span><h1>قاموس المصطلحات</h1>' +
     '<p class="muted">اضغط على أي مصطلح لسماع: الإنجليزية ← العربية ← الشرح.</p>' +
-    '<div class="grid g2">' + TERMS.map(termCard).join('') + '</div>' + subBanner() + '</div>');
+    '<div class="grid g2">' + DAY1_TERMS.map(termCard).join('') + '</div>' + subBanner() + '</div>');
   $$('[data-say]', view).forEach(el => el.addEventListener('click', e => { e.stopPropagation(); speakTerm(termMap.get(el.dataset.say)); }));
 }
 
 function viewPlan() {
   const d = (BOOK.plan || [])[0];
-  const day1 = d ? '<div class="card"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div class="day-num" style="background:var(--accent-soft);color:var(--accent)">' + arNum(1) + '</div><div style="flex:1;min-width:200px"><h3>' + esc(d.title) + '</h3><div class="muted small">' + esc(d.goal || '') + '</div></div><span class="lock-chip">' + icon('check') + ' متاح</span></div>' +
-    '<div style="margin-top:12px">' + (d.tasks || []).map(t => {
-      const open = !t.unit || t.unit === 'u01';
-      return '<div class="small muted" style="margin:6px 0">• ' + esc(t.t) + (open ? ' <button class="btn ghost sm" data-go="#/unit">افتح الوحدة</button>' : ' <span class="lock-chip">' + icon('lock') + ' اشترك</span>') + '</div>';
-    }).join('') + '</div></div>' : '';
+  const tasks = (d && d.tasks) || [];
+  const taskHtml = tasks.map(t => {
+    const open = !t.unit || DAY1.indexOf(t.unit) >= 0;
+    return '<div class="small muted" style="margin:6px 0">• ' + esc(t.t) + (open ? (t.unit ? ' <button class="btn ghost sm" data-go="#/unit/' + t.unit + '">افتح الوحدة</button>' : '') : ' <span class="lock-chip">' + icon('lock') + ' اشترك</span>') + '</div>';
+  }).join('');
   const rest = (BOOK.plan || []).slice(1).map(x =>
     '<button class="card locked-card" data-lock="اليوم ' + arNum(x.day) + '" style="text-align:right;display:block"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div class="day-num">' + arNum(x.day) + '</div><div style="flex:1"><h3>' + esc(x.title) + '</h3><div class="muted small">' + esc(x.short || '') + '</div></div><span class="lock-chip">' + icon('lock') + ' اشترك</span></div></button>').join('');
-  shell('<div class="reader"><h1>خطة الأسبوع</h1><p class="muted">اليوم الأول متاح بالكامل في التجربة، وباقي الأيام للمشتركين.</p>' +
-    '<div class="grid" style="gap:12px;margin-top:18px">' + day1 + rest + '</div>' + subBanner() + '</div>');
+  shell('<div class="reader"><h1>خطة الأسبوع</h1><p class="muted">اليوم ١ متاح بالكامل في التجربة، وباقي الأيام للمشتركين.</p>' +
+    '<div class="card"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div class="day-num" style="background:var(--accent-soft);color:var(--accent)">١</div><div style="flex:1;min-width:200px"><h3>' + esc(d.title) + '</h3><div class="muted small">' + esc(d.goal || '') + '</div></div><span class="lock-chip">' + icon('check') + ' متاح</span></div><div style="margin-top:12px">' + taskHtml + '</div></div>' +
+    '<div class="grid" style="gap:12px;margin-top:18px">' + rest + '</div>' + subBanner() + '</div>');
 }
 
 function viewDayOne() {
   const d = (BOOK.plan || [])[0];
   if (!d) return viewHome();
-  shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / اليوم الأول</div><span class="trial-badge">متاح في التجربة</span><h1>' + esc(d.title) + '</h1><p class="muted">' + esc(d.goal || '') + '</p>' +
-    '<div class="card"><h3>مهام اليوم</h3>' + (d.tasks || []).map(t => {
-      const open = !t.unit || t.unit === 'u01';
-      return '<div class="small muted" style="margin:8px 0">• ' + esc(t.t) + (open ? ' <button class="btn ghost sm" data-go="#/unit">افتح الوحدة</button>' : ' <button class="btn soft sm" data-lock="باقي الوحدات">' + icon('lock') + ' اشترك</button>') + '</div>';
-    }).join('') + '</div>' + subBanner() + '</div>');
+  const tasks = (d.tasks || []).map(t => {
+    const open = !t.unit || DAY1.indexOf(t.unit) >= 0;
+    return '<div class="small muted" style="margin:8px 0">• ' + esc(t.t) + (open ? (t.unit ? ' <button class="btn ghost sm" data-go="#/unit/' + t.unit + '">افتح الوحدة</button>' : '') : ' <button class="btn soft sm" data-lock="باقي الوحدات">' + icon('lock') + ' اشترك</button>') + '</div>';
+  }).join('');
+  shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / اليوم ١</div><span class="trial-badge">متاح في التجربة</span><h1>' + esc(d.title) + '</h1><p class="muted">' + esc(d.goal || '') + '</p><div class="card"><h3>مهام اليوم</h3>' + tasks + '</div>' + subBanner() + '</div>');
 }
 
 function viewLocked(title) {
   shell('<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / مقفول</div>' +
     '<div class="card locked-card"><span class="lock-chip">' + icon('lock') + ' للمشتركين</span>' +
     '<h1>' + esc(title || 'هذا القسم للمشتركين') + '</h1>' +
-    '<p class="muted">النسخة التجريبية تتيح الوحدة الأولى واختبارها فقط. كل الأيقونات تفتح، بس بيانات باقي الأقسام مقفولة.</p>' +
+    '<p class="muted">النسخة التجريبية تتيح اليوم الأول (٧ وحدات) بالكامل. كل الأيقونات تفتح، بس بيانات باقي الأيام مقفولة.</p>' +
     '<div class="row"><button class="btn" data-lock="' + esc(title || 'الاشتراك') + '">✦ اشترك الآن</button><button class="btn outline" data-go="#/home">العودة للتجربة</button></div></div>' + subBanner() + '</div>');
 }
 
-/* ---------------- subscribe modal ---------------- */
+/* ---------- subscribe modal ---------- */
 function openSubscribe(what) {
   const bg = $('#modalBg');
   $('#modal').innerHTML = '<button class="icon-btn" id="closeModal" style="float:left" aria-label="إغلاق">' + icon('close') + '</button>' +
@@ -518,14 +526,13 @@ function openSubscribe(what) {
 }
 $('#modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') e.target.classList.remove('open'); });
 
-/* ---------------- global bindings ---------------- */
+/* ---------- global bindings ---------- */
 document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
   if (go) { location.hash = go.dataset.go; $('#sidebar').classList.remove('open'); return; }
   const lk = e.target.closest('[data-lock]');
   if (lk) { e.preventDefault(); $('#sidebar').classList.remove('open'); openSubscribe(lk.dataset.lock || ''); return; }
   if ($('#sidebar').classList.contains('open') && !e.target.closest('#sidebar') && !e.target.closest('#menuBtn')) $('#sidebar').classList.remove('open');
-  if (!e.target.closest('.term')) { /* term pop is intentionally not used in demo */ }
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { $('#modalBg').classList.remove('open'); $('#searchResults').classList.remove('open'); $('#sidebar').classList.remove('open'); }
@@ -544,37 +551,34 @@ $('#themeBtn').onclick = () => {
 };
 $('#subTop').onclick = () => subscribe('الاشتراك');
 
-/* search limited to unit 1 */
+/* ---------- search (Day 1 only) ---------- */
 const searchIndex = [];
-TERMS.forEach((t, i) => searchIndex.push({ type:'مصطلح', title:t.ar, text:(t.ar + ' ' + (t.en || '') + ' ' + (t.def || '')), href:'#/glossary', term:i }));
-QUIZ.forEach((q, i) => searchIndex.push({ type:'سؤال', title:q.q.slice(0, 70), text:q.q + ' ' + (q.o || []).join(' '), href:'#/quiz' }));
-(U && U.blocks || []).forEach((b, i) => searchIndex.push({ type:'شرح', title:(b.x || b.cap || b.ar || '').slice(0, 70), text:blockText(b), href:'#/unit' }));
+DAY1.forEach(id => {
+  const u = UNITS[id];
+  (u.terms || []).forEach((t, i) => searchIndex.push({ type:'مصطلح', title:t.ar, text:(t.ar + ' ' + (t.en || '') + ' ' + (t.def || '')), href:'#/glossary' }));
+  (u.quiz || []).forEach((q, i) => searchIndex.push({ type:'سؤال', title:q.q.slice(0, 70), text:q.q + ' ' + (q.o || []).join(' '), href:'#/unit/' + id }));
+  (u.blocks || []).forEach((b, i) => searchIndex.push({ type:'شرح', title:(b.x || b.cap || b.ar || '').slice(0, 70), text:blockText(b), href:'#/unit/' + id }));
+});
 const searchResults = $('#searchResults');
 $('#searchInput').addEventListener('input', e => {
   const q = e.target.value.trim();
   if (!q) return searchResults.classList.remove('open');
   const hits = searchIndex.filter(x => x.text.indexOf(q) !== -1 || x.title.indexOf(q) !== -1).slice(0, 8);
   searchResults.innerHTML = hits.length
-    ? hits.map(h => '<button data-href="' + h.href + '" data-term="' + (h.term !== undefined ? h.term : '') + '"><b>' + esc(h.title) + '</b><small>' + esc(h.type) + '</small></button>').join('')
-    : '<div class="small muted" style="padding:10px">مفيش نتائج في الوحدة الأولى — باقي المحتوى للمشتركين.</div>';
+    ? hits.map(h => '<button data-href="' + h.href + '"><b>' + esc(h.title) + '</b><small>' + esc(h.type) + '</small></button>').join('')
+    : '<div class="small muted" style="padding:10px">مفيش نتائج في اليوم ١ — باقي المحتوى للمشتركين.</div>';
   searchResults.classList.add('open');
   $$('button', searchResults).forEach(b => b.onclick = () => {
-    const href = b.dataset.href;
-    searchResults.classList.remove('open');
-    $('#searchInput').value = '';
-    location.hash = href;
-    if (href === '#/glossary' && b.dataset.term !== '') setTimeout(() => {
-      const el = $('#demoTerm' + b.dataset.term);
-      if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
-    }, 80);
+    searchResults.classList.remove('open'); $('#searchInput').value = '';
+    location.hash = b.dataset.href;
   });
 });
 
-/* ---------------- router ---------------- */
+/* ---------- router ---------- */
 function route() {
   const p = (location.hash || '#/home').replace(/^#\//, '').split('/');
-  if (p[0] === 'unit') return p[1] && p[1] !== 'u01' ? viewLocked('الوحدة ' + p[1].toUpperCase()) : viewUnit();
-  if (p[0] === 'quiz') return viewQuiz();
+  if (p[0] === 'unit') return p[1] && DAY1.indexOf(p[1]) < 0 ? viewLocked('الوحدة ' + p[1].toUpperCase()) : viewUnit(p[1] || DAY1[0]);
+  if (p[0] === 'day-quiz') return viewDayQuiz();
   if (p[0] === 'cards') return viewCards();
   if (p[0] === 'glossary') return viewGlossary();
   if (p[0] === 'plan') return viewPlan();
@@ -582,6 +586,7 @@ function route() {
   if (p[0] === 'exam') return viewLocked('الامتحان الشامل');
   if (p[0] === 'past') return viewLocked('امتحانات دمياط');
   if (p[0] === 'practical') return viewLocked('الجزء العملي');
+  if (p[0] === 'quizzes') return viewLocked('الاختبارات');
   return viewHome();
 }
 window.addEventListener('hashchange', () => { renderSidebar(); route(); });
