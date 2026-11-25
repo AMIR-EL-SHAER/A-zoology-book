@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A-ZOOLOGY — عرض الاشتراك (٦٠ ثانية)</title>
+<style>
+:root{--ink:#eef2ff;--muted:#a9b3d6;--cyan:#22e5ff;--pur:#8c5aff;--gold:#ffd982;--navy:#070a16}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:radial-gradient(1200px 800px at 80% -10%,#1c0f3b 0%,#070a16 55%);color:var(--ink);font-family:'Cairo','Segoe UI',system-ui,sans-serif}
+.stage{position:relative;width:100vw;height:100vh;overflow:hidden}
+.dots{position:absolute;inset:0;opacity:.35;background-image:radial-gradient(circle at 20% 30%,rgba(34,229,255,.35) 0 2px,transparent 3px),radial-gradient(circle at 70% 60%,rgba(140,90,255,.35) 0 2px,transparent 3px),radial-gradient(circle at 40% 80%,rgba(34,229,255,.25) 0 1.5px,transparent 2.5px);background-size:120px 120px,160px 160px,90px 90px;animation:drift 20s linear infinite}
+@keyframes drift{to{background-position:120px 120px,0 160px,90px 0}}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:4vh 6vw;opacity:0;transform:translateY(30px);animation:scene 60s infinite}
+.s1{animation-delay:0s}.s2{animation-delay:12s}.s3{animation-delay:24s}.s4{animation-delay:36s}.s5{animation-delay:48s}
+@keyframes scene{0%{opacity:0;transform:translateY(40px) scale(.96)} 6%{opacity:1;transform:none} 18%{opacity:1;transform:none} 22%{opacity:0;transform:translateY(-30px) scale(1.02)} 100%{opacity:0}}
+.logo{width:110px;height:110px;border-radius:28px;background:linear-gradient(135deg,#1c0f3b,#0a0d1f);border:1px solid rgba(34,229,255,.4);display:grid;place-items:center;box-shadow:0 0 60px rgba(34,229,255,.25);margin-bottom:18px}
+.logo svg{width:70px;height:70px}
+h1{font-size:clamp(34px,6vw,74px);font-weight:900;letter-spacing:.02em;background:linear-gradient(135deg,#fff,#22e5ff 55%,#8c5aff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:clamp(16px,2.2vw,26px);color:var(--muted);margin-top:10px;max-width:70ch;line-height:1.8}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,217,130,.5);background:rgba(255,217,130,.12);color:var(--gold);border-radius:999px;padding:8px 18px;font-size:clamp(13px,1.6vw,18px);font-weight:800;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:26px;width:min(92vw,1100px)}
+.card{background:linear-gradient(135deg,rgba(28,15,59,.75),rgba(7,10,22,.55));border:1px solid rgba(34,229,255,.25);border-radius:18px;padding:20px 14px;backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card .n{font-size:clamp(26px,4vw,46px);font-weight:900;color:var(--cyan);line-height:1}
+.card .l{font-size:clamp(12px,1.4vw,16px);color:var(--muted);margin-top:6px}
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.feat{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 16px;font-size:clamp(13px,1.5vw,18px)}
+.feat svg{width:22px;height:22px;stroke:var(--cyan)}
+.phone{width:min(70vw,360px);height:min(80vh,640px);border-radius:36px;border:2px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#0a0d1f,#120a2a);box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 8px rgba(255,255,255,.04);position:relative;overflow:hidden}
+.phone .bar{height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.phone .screen{padding:16px;display:grid;gap:10px}
+.phone .unit{background:rgba(34,229,255,.08);border:1px solid rgba(34,229,255,.25);border-radius:12px;padding:10px;font-size:13px;text-align:right}
+.phone .wave{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--pur));animation:wave 2s ease-in-out infinite;margin-top:6px}
+@keyframes wave{0%,100%{width:30%}50%{width:90%}}
+.cta{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f5b942,#ffd98a);color:#1b1204;font-weight:900;font-size:clamp(16px,2vw,24px);padding:14px 28px;border-radius:14px;margin-top:18px;box-shadow:0 12px 30px rgba(245,185,66,.3)}
+.links{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.link{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--ink);border-radius:12px;padding:10px 16px;font-size:clamp(13px,1.4vw,17px)}
+.link svg{width:20px;height:20px}
+.footer{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:var(--muted);font-size:13px}
+@media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}.phone{width:86vw;height:70vh}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="dots"></div>
+
+  <section class="scene s1">
+    <div class="logo"><svg viewBox="0 0 48 48"><text x="24" y="34" font-size="34" font-weight="900" text-anchor="middle" fill="#22e5ff" font-family="Arial,sans-serif">Z</text></svg></div>
+    <h1>A-ZOOLOGY</h1>
+    <div class="sub">الكتاب التفاعلي لمقرر الحيوان العام<br>كلية الزراعة — جامعة دمياط</div>
+    <div class="badge">✦ نسخة تجريبية مجانية متاحة الآن</div>
+  </section>
+
+  <section class="scene s2">
+    <h1>اشترك وافتح كل شيء</h1>
+    <div class="sub">٥٧ وحدة • ٤١٢ مصطلح • ٣٨٤ سؤال • ١٠ امتحانات دمياط</div>
+    <div class="grid">
+      <div class="card"><div class="n">٥٧</div><div class="l">وحدة شرح</div></div>
+      <div class="card"><div class="n">٤١٢</div><div class="l">مصطلح بنطق</div></div>
+      <div class="card"><div class="n">٣٨٤</div><div class="l">سؤال اختبار</div></div>
+      <div class="card"><div class="n">١٠</div><div class="l">امتحانات دمياط</div></div>
+      <div class="card"><div class="n">٧٧+</div><div class="l">سؤال شامل</div></div>
+      <div class="card"><div class="n">٧</div><div class="l">أيام خطة</div></div>
+    </div>
+  </section>
+
+  <section class="scene s3">
+    <h1>تجربة قراءة احترافية</h1>
+    <div class="sub">شرح مختصر، صوت عربي احترافي، مصطلحات قابلة للنقر، بطاقات مراجعة.</div>
+    <div class="row">
+      <div class="phone">
+        <div class="bar">A-ZOOLOGY</div>
+        <div class="screen">
+          <div class="unit"><b>الوحدة ١ — مقدمة عامة</b><div class="wave"></div></div>
+          <div class="unit">🔊 استمع للوحدة</div>
+          <div class="unit">💡 مصطلح: علم Leben ← النطق ← الشرح</div>
+          <div class="unit">✅ اختبار فوري مع تصحيح</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene s4">
+    <h1>المميزات في الاشتراك</h1>
+    <div class="row">
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>كل الوحدات (١–٥٧)</div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>امتحانات دمياط ٢٠١٦–٢٠٢٥</div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>الامتحان الشامل + مقالية</div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>الجزء العملي والصور</div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>بطاقات مراجعة ذكية</div>
+      <div class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l4 4L19 6"/></svg>خطة ٧ أيام</div>
+    </div>
+  </section>
+
+  <section class="scene s5">
+    <h1>ابدأ الآن</h1>
+    <div class="sub">جرّب الوحدة الأولى مجانًا، ثم اشترك لفتح كل المحتوى.</div>
+    <div class="cta">✦ اشترك الآن</div>
+    <div class="links">
+      <span class="link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 5-3 14-4.5-3.2L9.8 18 9 13.5 19 6.5 10.5 12.6 5.5 11 21 5z"/></svg>تليجرام: +20 101 820 1045</span>
+      <span class="link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a9 9 0 0 0-7.8 13.4L3 21l4.7-1.2A9 9 0 1 0 12 3z"/></svg>واتساب: +20 101 820 1045</span>
+    </div>
+    <div class="badge">نسخة تجريبية: https://amir-el-shaer.github.io/A-zoology-book/demo.html</div>
+  </section>
+
+  <div class="footer">A-ZOOLOGY • الحيوان العام • كلية الزراعة — جامعة دمياط</div>
+</div>
+</body>
+</html>
