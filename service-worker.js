@@ -1,4 +1,4 @@
-const CACHE = 'azoo-v11';
+const CACHE = 'azoo-v12';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([
     './', './index.html', './app.js', './content.js', './style.css', './manifest.json'
@@ -14,7 +14,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
   if (/\.(?:js|css)$/.test(url.pathname)) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(fetch(e.request, { cache: 'reload' }).catch(() => caches.match(e.request)));
     return;
   }
   e.respondWith(
