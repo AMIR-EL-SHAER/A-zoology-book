@@ -1,7 +1,7 @@
-const CACHE = 'azoo-v17';
+const CACHE = 'azoo-v18';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([
-    './', './index.html', './app.js', './content.js', './style.css', './manifest.json'
+    './', './index.html', './demo.html', './app.js', './content.js', './codes.js', './style.css', './manifest.json'
   ])).catch(() => {}));
   self.skipWaiting();
 });

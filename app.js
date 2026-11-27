@@ -2,6 +2,16 @@
    الحيوان العام — تطبيق الكتاب التفاعلي
    ============================================================ */
 /* marker removed */
+/* وضع التجربة: demo.html يفعّله قبل تحميل app.js — النسخة الكاملة ما تتأثرش */
+const TRIAL = !!window.AZOO_TRIAL;
+let TRIAL_PREVIEW = false; /* بيعرض الصفحة الأصلية كاملة بس مقفولة */
+const TRIAL_TG = 'https://t.me/+201018201045?text=';
+function openTrialSubscribe(what) {
+  const txt = 'عايز أشترك في A-ZOOLOGY' + (what ? ' — ' + what : '');
+  const url = TRIAL_TG + encodeURIComponent(txt);
+  try { const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} return; } } catch (e) {}
+  location.href = url;
+}
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
@@ -46,9 +56,16 @@ function hydrateStaticIcons() {
   const close = $('#closePlayer'); if (close) close.innerHTML = icon('close');
 }
 const BOOK = window.BOOK;
+/* التجربة ما تحذفش أي بيانات: كل الأقسام والعدادات تفضل ظاهرة، بس الوصول مقفول */
+let TRIAL_UNIT_ID = null, TRIAL_UNIT_DAY = 1;
+if (TRIAL) {
+  const ids = Object.keys(BOOK.units || {});
+  TRIAL_UNIT_ID = ids.find(id => BOOK.units[id].part === 'theory') || ids[0];
+  TRIAL_UNIT_DAY = (BOOK.units[TRIAL_UNIT_ID] || {}).day || 1;
+}
 const CURRENT_USER_KEY = 'zoobook_current_user';
-const CURRENT_USER_CODE = localStorage.getItem(CURRENT_USER_KEY);
-const LS_KEY = CURRENT_USER_CODE ? 'zoobook_v1_' + CURRENT_USER_CODE : 'zoobook_v1';
+const CURRENT_USER_CODE = TRIAL ? null : localStorage.getItem(CURRENT_USER_KEY);
+const LS_KEY = TRIAL ? 'zoobook_trial_v1' : (CURRENT_USER_CODE ? 'zoobook_v1_' + CURRENT_USER_CODE : 'zoobook_v1');
 
 const esc = (s = '') => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -212,6 +229,35 @@ function renderSidebar() {
   $$('.nav-item[data-go], .day-link').forEach(el => {
     el.addEventListener('click', () => { $('#sidebar').classList.remove('open'); });
   });
+  if (TRIAL) {
+    const lockedNav = {
+      '#/glossary': 'قاموس المصطلحات', '#/cards': 'بطاقات المراجعة',
+      '#/term-quiz': 'اختبار المصطلحات', '#/quizzes': 'الاختبارات',
+      '#/exam': 'الامتحان الشامل', '#/past': 'امتحانات جامعة دمياط',
+      '#/practical': 'الجزء العملي'
+    };
+    $$('.nav-item[data-go]', nav).forEach(el => {
+      const what = lockedNav[el.dataset.go];
+      if (!what) return;
+      delete el.dataset.go;
+      el.dataset.lock = what;
+      el.insertAdjacentHTML('beforeend', '<span class="lock-chip">🔒</span>');
+    });
+    $$('.day-link', nav).forEach(el => {
+      const day = +String(el.getAttribute('href') || '').split('/').pop();
+      if (day === TRIAL_UNIT_DAY) return;
+      el.removeAttribute('href');
+      el.dataset.lock = 'اليوم ' + arNum(day);
+      el.insertAdjacentHTML('beforeend', '<span class="lock-chip">🔒</span>');
+    });
+    $$('.nav-item[data-go^="#/day/"]', nav).forEach(el => {
+      const day = +String(el.dataset.go).split('/').pop();
+      if (day === TRIAL_UNIT_DAY) return;
+      delete el.dataset.go;
+      el.dataset.lock = 'اليوم ' + arNum(day);
+      el.insertAdjacentHTML('beforeend', '<span class="lock-chip">🔒</span>');
+    });
+  }
 }
 
 function dayProgress(day) {
@@ -281,12 +327,112 @@ function unitRow(u) {
   </a>`;
 }
 
+/* ---------------- trial gate ---------------- */
+function trialRouteOK(parts) {
+  if (!TRIAL) return true;
+  const root = parts[0] || 'home';
+  if (!['home', 'plan', 'day', 'unit'].includes(root)) return false;
+  if (root === 'unit') return !parts[1] || parts[1] === TRIAL_UNIT_ID;
+  if (root === 'day') return !parts[1] || +parts[1] === TRIAL_UNIT_DAY;
+  return true;
+}
+function dayQuizQuestions(day) {
+  return dayUnits(day).reduce((n, id) => n + (((UNITS[id] && UNITS[id].quiz) || []).length), 0);
+}
+function trialLockedDetail(what, arg) {
+  switch (what) {
+    case 'practical': return `${arNum(practicalUnits.length)} وحدة عملية`;
+    case 'exam': return `امتحان شامل واحد — ${arNum(((BOOK.exam && BOOK.exam.questions) || []).length)} سؤال اختياري + ${arNum(((BOOK.exam && BOOK.exam.open) || []).length)} سؤال مقالي`;
+    case 'past': return `${arNum(PAST_EXAMS.length)} نماذج لامتحانات جامعة دمياط`;
+    case 'quizzes': return `${arNum(quizCount())} سؤال في اختبارات الوحدات`;
+    case 'glossary': return `${arNum(GLOSSARY.length)} مصطلح`;
+    case 'cards': return `${arNum(GLOSSARY.length)} بطاقة مراجعة`;
+    case 'term-quiz': return `${arNum(GLOSSARY.length)} مصطلح`;
+    case 'quiz-day': {
+      const day = +arg || TRIAL_UNIT_DAY;
+      return `اختبار اليوم ${arNum(day)} — ${arNum(dayQuizQuestions(day))} سؤال`;
+    }
+    case 'day': {
+      const day = +arg || TRIAL_UNIT_DAY;
+      return `اليوم ${arNum(day)} — ${arNum(dayUnits(day).length)} وحدات · ${arNum(dayQuizQuestions(day))} سؤال`;
+    }
+    case 'unit': return `${arNum(UNIT_LIST.length - 1)} وحدة أخرى`;
+    default: return '';
+  }
+}
+function lockTrialView(what, arg) {
+  const v = $('#view'); if (!v) return;
+  const labels = {
+    practical: 'الجزء العملي', quizzes: 'الاختبارات', exam: 'الامتحان الشامل',
+    past: 'امتحانات جامعة دمياط', glossary: 'قاموس المصطلحات', cards: 'بطاقات المراجعة',
+    'term-quiz': 'اختبار المصطلحات', 'quiz-day': 'اختبار اليوم', day: 'اليوم',
+    unit: 'باقي الوحدات'
+  };
+  let title = labels[what] || 'هذا القسم للمشتركين';
+  if ((what === 'day' || what === 'quiz-day') && arg) title += ` ${arNum(+arg)}`;
+  const detail = trialLockedDetail(what, arg);
+  v.querySelectorAll('a, button, input, textarea, select, .term, .opt, .q-card, .day-head').forEach(el => {
+    el.style.pointerEvents = 'none';
+    el.setAttribute('tabindex', '-1');
+    el.setAttribute('aria-disabled', 'true');
+  });
+  const strip = document.createElement('div');
+  strip.className = 'trial-lock-strip';
+  strip.style.cssText = 'display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:12px 14px;border:1px solid rgba(255,196,64,.35);border-radius:14px;background:rgba(255,196,64,.08)';
+  strip.innerHTML = `<span class="lock-chip">🔒 ${esc(detail || title)}</span><button class="btn sm" data-lock="${esc(title)}">✦ اشترك</button>`;
+  (v.querySelector('.reader') || v).prepend(strip);
+}
+function viewTrialLocked(what, arg) {
+  const day = +arg || TRIAL_UNIT_DAY;
+  switch (what) {
+    case 'practical': viewPractical(); break;
+    case 'exam': viewExam(); break;
+    case 'past': (arg && PAST_EXAMS.some(x => x.id === arg) ? viewPastExam(arg) : viewPastExams()); break;
+    case 'glossary': viewGlossary(); break;
+    case 'cards': viewCards(); break;
+    case 'term-quiz': viewTermQuiz(); break;
+    case 'quizzes': viewQuizzes(); break;
+    case 'quiz-day': viewDayQuiz(day); break;
+    case 'day': viewDay(day); break;
+    case 'unit': {
+      const u = UNITS[arg] || {};
+      $('#view').innerHTML = `<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / الوحدة ${arNum(u.no || '')}</div><h1>${esc(u.title || 'وحدة')}</h1><div class="reader-meta"><span class="tag">${arNum((u.blocks || []).length)} أقسام</span><span class="tag">${arNum(((u.terms || []).length))} مصطلح</span><span class="tag">${arNum((u.quiz || []).length)} سؤال</span></div></div>`;
+      break;
+    }
+    default: viewHome();
+  }
+  lockTrialView(what, arg);
+}
+function decorateTrial() {
+  if (!TRIAL) return;
+  const v = $('#view'); if (!v) return;
+  if (!$('#subTop') && $('#themeBtn')) {
+    const b = document.createElement('button');
+    b.className = 'btn sm'; b.id = 'subTop'; b.title = 'اشترك لفتح كل الوحدات';
+    b.textContent = '✦ اشترك الآن';
+    $('#themeBtn').before(b);
+  }
+  if (!v.querySelector('.trial-badge')) {
+    const badge = document.createElement('div');
+    badge.className = 'trial-badge'; badge.textContent = 'نسخة تجريبية — الوحدة الأولى';
+    (v.querySelector('.hero') || v.querySelector('.reader') || v).prepend(badge);
+  }
+  if (!v.querySelector('.trial-sub-banner')) {
+    const box = document.createElement('div');
+    box.className = 'card trial-note trial-sub-banner';
+    box.style.cssText = 'margin-top:20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap';
+    box.innerHTML = `<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px">✦ عايز كل المحتوى؟</h3><p class="muted small" style="margin:0">وحدة واحدة متاحة؛ ${arNum(UNIT_LIST.length - 1)} وحدة نظرية، ${arNum(practicalUnits.length)} وحدة عملية، امتحان شامل، ${arNum(PAST_EXAMS.length)} نماذج امتحان، و${arNum(GLOSSARY.length)} مصطلح مقفولة.</p></div><button class="btn" data-lock="الاشتراك">اشترك الآن على تليجرام</button>`;
+    v.appendChild(box);
+  }
+}
+
 /* ---------------- router ---------------- */
 function router() {
   const hash = location.hash || '#/home';
   const clean = hash.split('?')[0];
   const parts = clean.replace(/^#\//, '').split('/');
   const view = $('#view');
+  if (TRIAL && !trialRouteOK(parts)) return viewTrialLocked(parts[0], parts[1]);
   currentUnit = null;
   clearTimeout(scrollTimer);
   if (parts[0] !== 'exam') clearExamTopTimer();
@@ -320,9 +466,10 @@ function viewHome() {
   $('#view').innerHTML = `
   <section class="hero">
     <div class="hero-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    ${TRIAL ? '<div class="trial-badge">نسخة تجريبية — الوحدة الأولى</div>' : ''}
     <h2>مقرر الحيوان العام</h2>
-    ${currentUserName() ? `<p class="muted" style="margin:0 0 8px">مرحباً، <b>${esc(currentUserName())}</b></p>` : ''}
-    <p>كتاب تفاعلي شامل: شرح مختصر ومركّز، قراءة صوتية احترافية، مصطلحات، بطاقات مراجعة، واختبارات على كل جزئية — كلية الزراعة، جامعة دمياط.</p>
+    ${!TRIAL && currentUserName() ? `<p class="muted" style="margin:0 0 8px">مرحباً، <b>${esc(currentUserName())}</b></p>` : ''}
+    <p>${TRIAL ? 'جرّب الوحدة الأولى بالكامل بنفس الصوت والشرح والمصطلحات والاختبار. باقي الوحدات والأقسام للمشتركين.' : 'كتاب تفاعلي شامل: شرح مختصر ومركّز، قراءة صوتية احترافية، مصطلحات، بطاقات مراجعة، واختبارات على كل جزئية — كلية الزراعة، جامعة دمياط.'}</p>
     <div class="hero-meta">
       <span class="pill">${arNum(totalUnits)} وحدة</span>
       <span class="pill">${arNum(BOOK.plan.length)} أيام</span>
@@ -330,9 +477,9 @@ function viewHome() {
       <span class="pill">${arNum(quizCount())} سؤال</span>
     </div>
     <div class="hero-actions">
-      <button class="btn light" data-go="#/unit/${last}">${state.last ? 'كمّل من حيث توقفت' : 'ابدأ المذاكرة'} ←</button>
+      <button class="btn light" data-go="#/unit/${TRIAL ? TRIAL_UNIT_ID : last}">${state.last ? 'كمّل من حيث توقفت' : 'ابدأ المذاكرة'} ←</button>
       <button class="btn ghost" data-go="#/plan">خطة الأسبوع</button>
-      <button class="btn ghost" data-go="#/exam">امتحان شامل</button>
+      ${TRIAL ? '<button class="btn ghost" data-lock="الامتحان الشامل">✦ اشترك</button>' : '<button class="btn ghost" data-go="#/exam">امتحان شامل</button>'}
     </div>
     ${socialBar()}
   </section>
@@ -358,7 +505,7 @@ function viewHome() {
         <span>آخر وحدة: <b>${esc(lastU.title)}</b></span><span class="muted">${esc(lastU.pages ? 'ص ' + lastU.pages : '')}</span>
       </div>
       <div class="small muted" style="margin-bottom:8px">آخر موضع قراءة: ${pos ? arNum(pos) + ' بكسل' : 'البداية'}</div>
-      <button class="btn soft sm" data-go="#/unit/${last}">كمّل من هنا</button>
+      <button class="btn soft sm" data-go="#/unit/${TRIAL ? TRIAL_UNIT_ID : last}">كمّل من هنا</button>
     </div>
 
     <div class="card">
@@ -368,7 +515,7 @@ function viewHome() {
       <div class="small muted">اليوم ${arNum(plan.day)} — ${arNum(planP)}%</div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn soft sm" data-go="#/day/${plan.day}">ابدأ اليوم ${arNum(plan.day)}</button>
-        <button class="btn outline sm" data-go="#/cards">راجع ${arNum(due)} بطاقة</button>
+        ${TRIAL ? `<button class="btn outline sm" data-lock="بطاقات المراجعة">راجع ${arNum(GLOSSARY.length)} بطاقة 🔒</button>` : `<button class="btn outline sm" data-go="#/cards">راجع ${arNum(due)} بطاقة</button>`}
       </div>
     </div>
   </div>
@@ -378,14 +525,34 @@ function viewHome() {
 
   <h3 style="margin:26px 0 12px">روابط سريعة</h3>
   <div class="grid g4">
-    <button class="card" style="text-align:right" data-go="#/glossary"><h3>${icon('book')} قاموس المصطلحات</h3><p class="muted small" style="margin:0">${arNum(GLOSSARY.length)} مصطلح بالعربي والإنجليزي مع النطق.</p></button>
+    ${TRIAL ? `<button class="card locked-card" style="text-align:right" data-lock="قاموس المصطلحات"><span class="lock-chip">🔒 اشترك</span><h3>${icon('book')} قاموس المصطلحات</h3><p class="muted small" style="margin:0">${arNum(GLOSSARY.length)} مصطلح بالعربي والإنجليزي مع النطق.</p></button>
+    <button class="card locked-card" style="text-align:right" data-lock="بطاقات المراجعة"><span class="lock-chip">🔒 اشترك</span><h3>${icon('cards')} بطاقات المراجعة</h3><p class="muted small" style="margin:0">${arNum(GLOSSARY.length)} بطاقة مراجعة.</p></button>
+    <button class="card locked-card" style="text-align:right" data-lock="الاختبارات"><span class="lock-chip">🔒 اشترك</span><h3>${icon('quiz')} الاختبارات</h3><p class="muted small" style="margin:0">${arNum(quizCount())} سؤال على الوحدات.</p></button>
+    <button class="card locked-card" style="text-align:right" data-lock="الجزء العملي"><span class="lock-chip">🔒 اشترك</span><h3>${icon('flask')} الجزء العملي</h3><p class="muted small" style="margin:0">${arNum(practicalUnits.length)} وحدة عملية — الأنسجة والشرائح.</p></button>
+    <button class="card locked-card" style="text-align:right" data-lock="امتحانات جامعة دمياط"><span class="lock-chip">🔒 اشترك</span><h3>${icon('archive')} امتحانات جامعة دمياط</h3><p class="muted small" style="margin:0">${arNum(PAST_EXAMS.length)} نماذج (٢٠١٦–٢٠٢٥) مع تصحيح فوري.</p></button>` : `<button class="card" style="text-align:right" data-go="#/glossary"><h3>${icon('book')} قاموس المصطلحات</h3><p class="muted small" style="margin:0">${arNum(GLOSSARY.length)} مصطلح بالعربي والإنجليزي مع النطق.</p></button>
     <button class="card" style="text-align:right" data-go="#/cards"><h3>${icon('cards')} بطاقات المراجعة</h3><p class="muted small" style="margin:0">${arNum(due)} مستحقة اليوم من أصل ${arNum(GLOSSARY.length)}.</p></button>
     <button class="card" style="text-align:right" data-go="#/quizzes"><h3>${icon('quiz')} نقاط ضعفي</h3><p class="muted small" style="margin:0">${arNum(weak)} سؤال محفوظ — راجع اختبارات الوحدات.</p></button>
     <button class="card" style="text-align:right" data-go="#/practical"><h3>${icon('flask')} الجزء العملي</h3><p class="muted small" style="margin:0">الأنسجة، الأدوات، والشرائح مع الصور.</p></button>
-    <button class="card" style="text-align:right" data-go="#/past"><h3>${icon('archive')} امتحانات دمياط</h3><p class="muted small" style="margin:0">${arNum(PAST_EXAMS.length)} نموذج (٢٠١٦–٢٠٢٥) مع تصحيح فوري.</p></button>
+    <button class="card" style="text-align:right" data-go="#/past"><h3>${icon('archive')} امتحانات دمياط</h3><p class="muted small" style="margin:0">${arNum(PAST_EXAMS.length)} نموذج (٢٠١٦–٢٠٢٥) مع تصحيح فوري.</p></button>`}
   </div>`;
   bindGo();
   bindTasks();
+  if (TRIAL) {
+    $$('.day-card', $('#view')).forEach((card, i) => {
+      const day = (BOOK.plan[i] || {}).day;
+      const btn = card.querySelector('[data-go^="#/day/"]');
+      if (!btn || !day) return;
+      if (day !== TRIAL_UNIT_DAY) {
+        delete btn.dataset.go;
+        btn.dataset.lock = 'اليوم ' + arNum(day);
+        btn.innerHTML = '<span class="lock-chip">🔒</span> مقفول — اشترك';
+      } else {
+        btn.dataset.go = '#/unit/' + TRIAL_UNIT_ID;
+        btn.textContent = 'افتح الوحدة الأولى';
+        card.querySelector('.day-head')?.insertAdjacentHTML('beforeend', '<span class="lock-chip">١ من ' + arNum(dayUnits(day).length) + ' متاح</span>');
+      }
+    });
+  }
   $$('.day-head[data-toggle]').forEach(el => el.onclick = () => el.closest('.day-card').classList.toggle('open'));
 }
 
@@ -444,16 +611,23 @@ function viewDay(day) {
         const checked = state.tasks[k] ? 'checked' : '';
         return `<label class="task ${checked ? 'done' : ''}">
           <input type="checkbox" data-task="${k}" ${checked}>
-          <span>${esc(t.t)} ${t.unit ? `<a href="#/unit/${t.unit}" class="small">فتح الوحدة</a>` : (t.go ? `<a href="${esc(t.go)}" class="small">فتح القسم</a>` : '')}</span>
+          <span>${esc(t.t)} ${t.unit ? (TRIAL && t.unit !== TRIAL_UNIT_ID ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="#/unit/${t.unit}" class="small">فتح الوحدة</a>`) : (t.go ? (TRIAL ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="${esc(t.go)}" class="small">فتح القسم</a>`) : '')}</span>
         </label>`;
       }).join('')}
     </div>
     <div class="grid" style="gap:10px">
-      ${ids.map(id => unitRow(UNITS[id])).join('')}
+      ${ids.map(id => {
+        if (TRIAL && id !== TRIAL_UNIT_ID) {
+          const u = UNITS[id];
+          return `<div class="card locked-card" style="padding:14px 16px"><span class="lock-chip">🔒 اشترك</span> <b>${esc(u && u.title || id)}</b> <span class="small muted">${arNum((u && u.blocks || []).length)} أقسام</span></div>`;
+        }
+        return unitRow(UNITS[id]);
+      }).join('')}
     </div>
     <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-      <a class="btn" href="#/quiz-day/${day}">اختبار اليوم</a>
-      <a class="btn outline" href="#/cards?day=${day}">بطاقات اليوم</a>
+      ${TRIAL ? `<button class="btn" data-lock="اختبار اليوم ${arNum(day)}">🔒 اختبار اليوم — ${arNum(dayQuizQuestions(day))} سؤال</button>
+      <button class="btn outline" data-lock="بطاقات المراجعة">🔒 بطاقات اليوم</button>` : `<a class="btn" href="#/quiz-day/${day}">اختبار اليوم</a>
+      <a class="btn outline" href="#/cards?day=${day}">بطاقات اليوم</a>`}
     </div>
   </div>`;
   bindTasks();
@@ -1442,8 +1616,8 @@ $('#settingsBtn').onclick = () => {
     </div></div>
     <div class="setting"><span>الوضع</span><button class="btn outline sm" id="themeInModal">${state.settings.theme === 'dark' ? 'نهاري' : 'ليلي'}</button></div>
     <div class="setting"><span>تصفير التقدم</span><button class="btn danger sm" id="resetAll">حذف كل التقدم</button></div>
-    <div class="setting"><span>الحساب</span><span class="muted small">${esc(currentUserName())} — ${esc(localStorage.getItem(CURRENT_USER_KEY) || '')}</span></div>
-    <div class="setting"><span>الجلسة</span><button class="btn outline sm" id="logoutBtn">تسجيل خروج</button></div>
+    ${TRIAL ? `<div class="setting"><span>النسخة التجريبية</span><button class="btn sm" data-lock="الاشتراك">✦ اشترك لفتح كل الوحدات</button></div>` : `<div class="setting"><span>الحساب</span><span class="muted small">${esc(currentUserName())} — ${esc(localStorage.getItem(CURRENT_USER_KEY) || '')}</span></div>
+    <div class="setting"><span>الجلسة</span><button class="btn outline sm" id="logoutBtn">تسجيل خروج</button></div>`}
     <div class="setting"><span>نسخة احتياطية</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn outline sm" id="exportBtn">تصدير JSON</button><button class="btn outline sm" id="importBtn">استيراد JSON</button><input type="file" id="importFile" accept="application/json" hidden></div></div>
     <div class="setting"><span>اختصارات لوحة المفاتيح</span><button class="btn outline sm" id="helpBtn">عرض "؟"</button></div>
     <div style="margin-top:16px;text-align:left"><button class="btn" id="closeModal">تم</button></div>`;
@@ -1451,7 +1625,7 @@ $('#settingsBtn').onclick = () => {
   $('#closeModal').onclick = () => $('#modalBg').classList.remove('open');
   $('#themeInModal').onclick = () => { state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark'; save(); applySettings(); $('#settingsBtn').click(); };
   $('#resetAll').onclick = () => { if (confirm('هتحذف كل التقدم والنتائج. متأكد؟')) { localStorage.removeItem(LS_KEY); location.reload(); } };
-  $('#logoutBtn').onclick = () => { localStorage.removeItem('zoobook_auth'); location.reload(); };
+  $('#logoutBtn')?.addEventListener('click', () => { localStorage.removeItem('zoobook_auth'); location.reload(); });
   $('#exportBtn').onclick = () => exportProgress();
   $('#importBtn').onclick = () => $('#importFile').click();
   $('#importFile').onchange = e => { if (e.target.files[0]) importProgress(e.target.files[0]); e.target.value=''; };
@@ -1525,17 +1699,36 @@ document.addEventListener('click', e => {
 });
 window.addEventListener('hashchange', () => {
   const h = location.hash;
-  if (h.startsWith('#/quiz-day/')) { renderSidebar(); viewDayQuiz(+h.split('/')[2]); }
+  if (h.startsWith('#/quiz-day/')) {
+    renderSidebar();
+    if (TRIAL) return viewTrialLocked('quiz-day', h.split('/')[2]);
+    viewDayQuiz(+h.split('/')[2]);
+  }
 });
 hydrateStaticIcons();
 applySettings();
-if (!localStorage.getItem('zoobook_auth')) {
+if (!TRIAL && !localStorage.getItem('zoobook_auth')) {
   viewLogin();
 } else {
   renderSidebar();
-  if (location.hash.startsWith('#/quiz-day/')) viewDayQuiz(+location.hash.split('/')[2]);
-  else router();
+  if (location.hash.startsWith('#/quiz-day/')) {
+    if (TRIAL) viewTrialLocked('quiz-day', location.hash.split('/')[2]);
+    else viewDayQuiz(+location.hash.split('/')[2]);
+  } else router();
   bindTasks();
+}
+if (TRIAL) {
+  $('#subTop')?.addEventListener('click', () => openTrialSubscribe('الاشتراك'));
+  document.addEventListener('click', e => {
+    const lk = e.target.closest('[data-lock]');
+    if (!lk) return;
+    e.preventDefault();
+    $('#sidebar').classList.remove('open');
+    openTrialSubscribe(lk.dataset.lock || 'الاشتراك');
+  });
+  const viewEl = $('#view');
+  if (viewEl && window.MutationObserver) new MutationObserver(() => decorateTrial()).observe(viewEl, { childList: true });
+  decorateTrial();
 }
 
 /* ---------------- Phase 5: backup, shortcuts, accessibility, print, PWA ---------------- */
@@ -1630,12 +1823,14 @@ const printAllBtn = document.createElement('button');
 printAllBtn.className = 'icon-btn'; printAllBtn.title = 'طباعة الكتاب كاملاً'; printAllBtn.innerHTML = icon('book');
 printAllBtn.onclick = () => printWholeBook();
 document.querySelector('.topbar')?.appendChild(printAllBtn);
-const __logoutBtn = document.createElement('button');
-__logoutBtn.className = 'icon-btn';
-__logoutBtn.title = 'تسجيل خروج';
-__logoutBtn.setAttribute('aria-label', 'تسجيل خروج');
-__logoutBtn.innerHTML = icon('logout');
-__logoutBtn.onclick = () => { localStorage.removeItem('zoobook_auth'); location.reload(); };
-document.querySelector('.topbar')?.appendChild(__logoutBtn);
+if (!TRIAL) {
+  const __logoutBtn = document.createElement('button');
+  __logoutBtn.className = 'icon-btn';
+  __logoutBtn.title = 'تسجيل خروج';
+  __logoutBtn.setAttribute('aria-label', 'تسجيل خروج');
+  __logoutBtn.innerHTML = icon('logout');
+  __logoutBtn.onclick = () => { localStorage.removeItem('zoobook_auth'); location.reload(); };
+  document.querySelector('.topbar')?.appendChild(__logoutBtn);
+}
 
 /* marker removed */
