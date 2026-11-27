@@ -123,6 +123,10 @@ if (BOOK.glossary) BOOK.glossary.forEach(t => {
 });
 const termMap = new Map();
 GLOSSARY.forEach(t => { if (t.ar) termMap.set(t.ar.trim(), t); });
+/* المصطلحات المكتوبة فعليًا في المقرر — من غير تخمين الكلمات المفردة */
+const EXACT_TERM_KEYS = new Set(GLOSSARY.map(t => t.ar && t.ar.trim()).filter(Boolean));
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const hasTerm = (text, key) => new RegExp('(?<![\\u0600-\\u06FF])' + escRe(key) + '(?![\\u0600-\\u06FF])').test(text);
 
 /* كل كلمة داخل المصطلح ليها نفس المعنى الإنجليزي للمصطلح كامل */
 const WORD_STOP = new Set(['علم','من','في','على','إلى','عن','مع','كل','هذا','هذه','ذلك','بين','بعد','قبل','التي','الذي','الذين','غير','أو','و','ب','ل','ك']);
@@ -151,10 +155,27 @@ const TERM_ALIASES = {
 };
 Object.entries(TERM_ALIASES).forEach(([alias, key]) => {
   if (termMap.has(key) && !termMap.has(alias)) termMap.set(alias, termMap.get(key));
+  if (termMap.has(key)) EXACT_TERM_KEYS.add(alias);
 });
 
+/* مصطلح «مهم» = بيظهر في أكتر من وحدة */
+const termUnitsSeen = new Map();
+UNIT_LIST.forEach(id => {
+  const u = UNITS[id];
+  const text = [u.title, u.titleEn, u.summary, u.note,
+    ...(u.blocks || []).map(blockText),
+    ...(u.terms || []).map(t => t && t.ar)].filter(Boolean).join(' ');
+  EXACT_TERM_KEYS.forEach(key => {
+    if (key.length > 1 && hasTerm(text, key)) {
+      if (!termUnitsSeen.has(key)) termUnitsSeen.set(key, new Set());
+      termUnitsSeen.get(key).add(id);
+    }
+  });
+});
+const isImportantTerm = t => (termUnitsSeen.get(t.ar && t.ar.trim()) || new Set()).size > 1;
+
 /* longest first for linking */
-const TERM_KEYS = Array.from(termMap.keys()).sort((a, b) => b.length - a.length);
+const TERM_KEYS = Array.from(EXACT_TERM_KEYS).sort((a, b) => b.length - a.length);
 const MAX_LINK = 6;
 
 /* ---------------- sidebar ---------------- */
@@ -440,6 +461,7 @@ function viewDay(day) {
 
 /* ---------------- unit reader ---------------- */
 let currentUnit = null;
+let spokenInUnit = new Set();
 let scrollTimer = null;
 window.addEventListener('scroll', () => {
   const id = currentUnit && currentUnit.id;
@@ -457,6 +479,7 @@ function viewUnit(id) {
   const u = UNITS[id];
   if (!u) return viewHome();
   currentUnit = u;
+  spokenInUnit = new Set();
   state.last = id; state.visited[id] = true; markStudyDay();
   const d = BOOK.plan.find(x => x.day === u.day);
   const terms = u.terms || [];
@@ -600,7 +623,13 @@ function linkTerms(root) {
     e.preventDefault(); e.stopPropagation();
     const key = el.dataset.term;
     const t = termMap.get(key);
-    if (t) speakTerm(t);
+    if (!t) return;
+    const said = t.ar && t.ar.trim();
+    if (!isImportantTerm(t)) {
+      if (spokenInUnit.has(said)) return;
+      spokenInUnit.add(said);
+    }
+    speakTerm(t);
   }));
 }
 
