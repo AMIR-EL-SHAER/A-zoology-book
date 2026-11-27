@@ -63,7 +63,9 @@ const fmtTime = s => {
 
 /* ---------------- state ---------------- */
 const RATES = [0.8, 1, 1.15, 1.3, 1.5];
-const STEP_GAP = 200;
+const STEP_GAP = 120;
+const GAP_JITTER = 80;
+const naturalGap = src => STEP_GAP + (Array.from(src).reduce((n, c) => n + c.charCodeAt(0), 0) % GAP_JITTER);
 const normRate = v => RATES.includes(+v) ? +v : 1;
 const defaultState = {
   done: {}, quiz: {}, exam: null, examHistory: [], pastQuiz: {}, cards: {}, tasks: {},
@@ -1307,7 +1309,7 @@ function speakTerm(t) {
       if (settled || token !== termSeq) return;
       settled = true;
       termAudio.onended = null; termAudio.onerror = null;
-      if (i < steps.length) queue(STEP_GAP);
+      if (i < steps.length) queue(naturalGap(src));
     };
     termAudio.onended = done;
     termAudio.onerror = () => { audioFail(src); done(); };
