@@ -461,7 +461,7 @@ function viewDay(day) {
 
 /* ---------------- unit reader ---------------- */
 let currentUnit = null;
-let spokenInUnit = new Set();
+let spokenInUnit = new Map();
 let scrollTimer = null;
 window.addEventListener('scroll', () => {
   const id = currentUnit && currentUnit.id;
@@ -479,7 +479,7 @@ function viewUnit(id) {
   const u = UNITS[id];
   if (!u) return viewHome();
   currentUnit = u;
-  spokenInUnit = new Set();
+  spokenInUnit = new Map();
   state.last = id; state.visited[id] = true; markStudyDay();
   const d = BOOK.plan.find(x => x.day === u.day);
   const terms = u.terms || [];
@@ -626,8 +626,9 @@ function linkTerms(root) {
     if (!t) return;
     const said = t.ar && t.ar.trim();
     if (!isImportantTerm(t)) {
-      if (spokenInUnit.has(said)) return;
-      spokenInUnit.add(said);
+      const n = spokenInUnit.get(said) || 0;
+      if (n >= 2) return;
+      spokenInUnit.set(said, n + 1);
     }
     speakTerm(t);
   }));
