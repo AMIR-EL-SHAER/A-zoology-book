@@ -57,11 +57,12 @@ function hydrateStaticIcons() {
 }
 const BOOK = window.BOOK;
 /* التجربة ما تحذفش أي بيانات: كل الأقسام والعدادات تفضل ظاهرة، بس الوصول مقفول */
-let TRIAL_UNIT_ID = null, TRIAL_UNIT_DAY = 1;
+let TRIAL_UNIT_ID = null, TRIAL_UNIT_DAY = 1, TRIAL_UNITS = new Set();
 if (TRIAL) {
   const ids = Object.keys(BOOK.units || {});
   TRIAL_UNIT_ID = ids.find(id => BOOK.units[id].part === 'theory') || ids[0];
   TRIAL_UNIT_DAY = (BOOK.units[TRIAL_UNIT_ID] || {}).day || 1;
+  TRIAL_UNITS = new Set(ids.filter(id => (BOOK.units[id] || {}).day === TRIAL_UNIT_DAY));
 }
 const CURRENT_USER_KEY = 'zoobook_current_user';
 const CURRENT_USER_CODE = TRIAL ? null : localStorage.getItem(CURRENT_USER_KEY);
@@ -250,6 +251,13 @@ function renderSidebar() {
       el.dataset.lock = 'اليوم ' + arNum(day);
       el.insertAdjacentHTML('beforeend', '<span class="lock-chip">🔒</span>');
     });
+    $$('.nav-item[data-go^="#/cards?day="], .nav-item[data-go^="#/quiz-day/"]', nav).forEach(el => {
+      const day = +String(el.dataset.go).match(/\d+/)?.[0];
+      if (day === TRIAL_UNIT_DAY) return;
+      delete el.dataset.go;
+      el.dataset.lock = day ? 'اليوم ' + arNum(day) : 'بطاقات المراجعة';
+      el.insertAdjacentHTML('beforeend', '<span class="lock-chip">🔒</span>');
+    });
     $$('.nav-item[data-go^="#/day/"]', nav).forEach(el => {
       const day = +String(el.dataset.go).split('/').pop();
       if (day === TRIAL_UNIT_DAY) return;
@@ -331,9 +339,11 @@ function unitRow(u) {
 function trialRouteOK(parts) {
   if (!TRIAL) return true;
   const root = parts[0] || 'home';
-  if (!['home', 'plan', 'day', 'unit'].includes(root)) return false;
-  if (root === 'unit') return !parts[1] || parts[1] === TRIAL_UNIT_ID;
+  if (!['home', 'plan', 'day', 'unit', 'quiz-day', 'cards'].includes(root)) return false;
+  if (root === 'unit') return !parts[1] || TRIAL_UNITS.has(parts[1]);
   if (root === 'day') return !parts[1] || +parts[1] === TRIAL_UNIT_DAY;
+  if (root === 'quiz-day') return !parts[1] || +parts[1] === TRIAL_UNIT_DAY;
+  if (root === 'cards') return String(location.hash.split('?')[1] || '').includes('day=' + TRIAL_UNIT_DAY);
   return true;
 }
 function dayQuizQuestions(day) {
@@ -356,7 +366,7 @@ function trialLockedDetail(what, arg) {
       const day = +arg || TRIAL_UNIT_DAY;
       return `اليوم ${arNum(day)} — ${arNum(dayUnits(day).length)} وحدات · ${arNum(dayQuizQuestions(day))} سؤال`;
     }
-    case 'unit': return `${arNum(UNIT_LIST.length - 1)} وحدة أخرى`;
+    case 'unit': return `${arNum(UNIT_LIST.length - TRIAL_UNITS.size)} وحدة أخرى`;
     default: return '';
   }
 }
@@ -384,46 +394,37 @@ function lockTrialView(what, arg) {
 }
 function viewTrialLocked(what, arg) {
   const day = +arg || TRIAL_UNIT_DAY;
-  switch (what) {
-    case 'practical': viewPractical(); break;
-    case 'exam': viewExam(); break;
-    case 'past': (arg && PAST_EXAMS.some(x => x.id === arg) ? viewPastExam(arg) : viewPastExams()); break;
-    case 'glossary': viewGlossary(); break;
-    case 'cards': viewCards(); break;
-    case 'term-quiz': viewTermQuiz(); break;
-    case 'quizzes': viewQuizzes(); break;
-    case 'quiz-day': viewDayQuiz(day); break;
-    case 'day': viewDay(day); break;
-    case 'unit': {
-      const u = UNITS[arg] || {};
-      $('#view').innerHTML = `<div class="reader"><div class="crumbs"><a href="#/home">الرئيسية</a> / الوحدة ${arNum(u.no || '')}</div><h1>${esc(u.title || 'وحدة')}</h1><div class="reader-meta"><span class="tag">${arNum((u.blocks || []).length)} أقسام</span><span class="tag">${arNum(((u.terms || []).length))} مصطلح</span><span class="tag">${arNum((u.quiz || []).length)} سؤال</span></div></div>`;
-      break;
+  TRIAL_PREVIEW = true;
+  try {
+    switch (what) {
+      case 'practical': viewPractical(); break;
+      case 'exam': viewExam(); break;
+      case 'past': (arg && PAST_EXAMS.some(x => x.id === arg) ? viewPastExam(arg) : viewPastExams()); break;
+      case 'glossary': viewGlossary(); break;
+      case 'cards': viewCards(); break;
+      case 'term-quiz': viewTermQuiz(); break;
+      case 'quizzes': viewQuizzes(); break;
+      case 'quiz-day': viewDayQuiz(day); break;
+      case 'day': viewDay(day); break;
+      case 'unit': viewUnit(arg); break;
+      default: viewHome();
     }
-    default: viewHome();
-  }
+  } finally { TRIAL_PREVIEW = false; }
   lockTrialView(what, arg);
 }
 function decorateTrial() {
   if (!TRIAL) return;
-  const v = $('#view'); if (!v) return;
   if (!$('#subTop') && $('#themeBtn')) {
     const b = document.createElement('button');
-    b.className = 'btn sm'; b.id = 'subTop'; b.title = 'اشترك لفتح كل الوحدات';
+    b.className = 'btn sm'; b.id = 'subTop'; b.title = 'اشترك لفتح باقي المقرر';
     b.textContent = '✦ اشترك الآن';
     $('#themeBtn').before(b);
   }
-  if (!v.querySelector('.trial-badge')) {
-    const badge = document.createElement('div');
-    badge.className = 'trial-badge'; badge.textContent = 'نسخة تجريبية — الوحدة الأولى';
-    (v.querySelector('.hero') || v.querySelector('.reader') || v).prepend(badge);
-  }
-  if (!v.querySelector('.trial-sub-banner')) {
-    const box = document.createElement('div');
-    box.className = 'card trial-note trial-sub-banner';
-    box.style.cssText = 'margin-top:20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap';
-    box.innerHTML = `<div style="flex:1;min-width:220px"><h3 style="margin:0 0 6px">✦ عايز كل المحتوى؟</h3><p class="muted small" style="margin:0">وحدة واحدة متاحة؛ ${arNum(UNIT_LIST.length - 1)} وحدة نظرية، ${arNum(practicalUnits.length)} وحدة عملية، امتحان شامل، ${arNum(PAST_EXAMS.length)} نماذج امتحان، و${arNum(GLOSSARY.length)} مصطلح مقفولة.</p></div><button class="btn" data-lock="الاشتراك">اشترك الآن على تليجرام</button>`;
-    v.appendChild(box);
-  }
+}
+/* شريط صغير فوق أي صفحة مقفولة: نفس الصفحة الأصلية + العدد الحقيقي */
+function trialLockNote(what, arg) {
+  const d = trialLockedDetail(what, arg);
+  return d ? `<span class="lock-chip">🔒 ${esc(d)}</span>` : '';
 }
 
 /* ---------------- router ---------------- */
@@ -466,10 +467,9 @@ function viewHome() {
   $('#view').innerHTML = `
   <section class="hero">
     <div class="hero-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-    ${TRIAL ? '<div class="trial-badge">نسخة تجريبية — الوحدة الأولى</div>' : ''}
     <h2>مقرر الحيوان العام</h2>
     ${!TRIAL && currentUserName() ? `<p class="muted" style="margin:0 0 8px">مرحباً، <b>${esc(currentUserName())}</b></p>` : ''}
-    <p>${TRIAL ? 'جرّب الوحدة الأولى بالكامل بنفس الصوت والشرح والمصطلحات والاختبار. باقي الوحدات والأقسام للمشتركين.' : 'كتاب تفاعلي شامل: شرح مختصر ومركّز، قراءة صوتية احترافية، مصطلحات، بطاقات مراجعة، واختبارات على كل جزئية — كلية الزراعة، جامعة دمياط.'}</p>
+    <p>كتاب تفاعلي شامل: شرح مختصر ومركّز، قراءة صوتية احترافية، مصطلحات، بطاقات مراجعة، واختبارات على كل جزئية — كلية الزراعة، جامعة دمياط.${TRIAL ? ' النسخة التجريبية تفتح اليوم الأول كامل.' : ''}</p>
     <div class="hero-meta">
       <span class="pill">${arNum(totalUnits)} وحدة</span>
       <span class="pill">${arNum(BOOK.plan.length)} أيام</span>
@@ -477,7 +477,7 @@ function viewHome() {
       <span class="pill">${arNum(quizCount())} سؤال</span>
     </div>
     <div class="hero-actions">
-      <button class="btn light" data-go="#/unit/${TRIAL ? TRIAL_UNIT_ID : last}">${state.last ? 'كمّل من حيث توقفت' : 'ابدأ المذاكرة'} ←</button>
+      ${TRIAL ? `<button class="btn light" data-go="#/day/${TRIAL_UNIT_DAY}">ابدأ اليوم الأول ←</button>` : `<button class="btn light" data-go="#/unit/${last}">${state.last ? 'كمّل من حيث توقفت' : 'ابدأ المذاكرة'} ←</button>`}
       <button class="btn ghost" data-go="#/plan">خطة الأسبوع</button>
       ${TRIAL ? '<button class="btn ghost" data-lock="الامتحان الشامل">✦ اشترك</button>' : '<button class="btn ghost" data-go="#/exam">امتحان شامل</button>'}
     </div>
@@ -505,7 +505,7 @@ function viewHome() {
         <span>آخر وحدة: <b>${esc(lastU.title)}</b></span><span class="muted">${esc(lastU.pages ? 'ص ' + lastU.pages : '')}</span>
       </div>
       <div class="small muted" style="margin-bottom:8px">آخر موضع قراءة: ${pos ? arNum(pos) + ' بكسل' : 'البداية'}</div>
-      <button class="btn soft sm" data-go="#/unit/${TRIAL ? TRIAL_UNIT_ID : last}">كمّل من هنا</button>
+      ${TRIAL ? `<button class="btn soft sm" data-go="#/day/${TRIAL_UNIT_DAY}">كمّل من هنا</button>` : `<button class="btn soft sm" data-go="#/unit/${last}">كمّل من هنا</button>`}
     </div>
 
     <div class="card">
@@ -515,7 +515,7 @@ function viewHome() {
       <div class="small muted">اليوم ${arNum(plan.day)} — ${arNum(planP)}%</div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn soft sm" data-go="#/day/${plan.day}">ابدأ اليوم ${arNum(plan.day)}</button>
-        ${TRIAL ? `<button class="btn outline sm" data-lock="بطاقات المراجعة">راجع ${arNum(GLOSSARY.length)} بطاقة 🔒</button>` : `<button class="btn outline sm" data-go="#/cards">راجع ${arNum(due)} بطاقة</button>`}
+        ${TRIAL ? `<button class="btn outline sm" data-go="#/cards?day=${TRIAL_UNIT_DAY}">راجع بطاقات اليوم الأول</button>` : `<button class="btn outline sm" data-go="#/cards">راجع ${arNum(due)} بطاقة</button>`}
       </div>
     </div>
   </div>
@@ -546,10 +546,6 @@ function viewHome() {
         delete btn.dataset.go;
         btn.dataset.lock = 'اليوم ' + arNum(day);
         btn.innerHTML = '<span class="lock-chip">🔒</span> مقفول — اشترك';
-      } else {
-        btn.dataset.go = '#/unit/' + TRIAL_UNIT_ID;
-        btn.textContent = 'افتح الوحدة الأولى';
-        card.querySelector('.day-head')?.insertAdjacentHTML('beforeend', '<span class="lock-chip">١ من ' + arNum(dayUnits(day).length) + ' متاح</span>');
       }
     });
   }
@@ -579,9 +575,11 @@ function viewPlan() {
             ${d.tasks.map((t, i) => `<div class="small muted">• ${esc(t.t)}</div>`).join('')}
           </div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn soft sm" href="#/day/${d.day}">ابدأ</a>
+            ${TRIAL && !TRIAL_PREVIEW && d.day !== TRIAL_UNIT_DAY ? `<button class="btn soft sm" data-lock="اليوم ${arNum(d.day)}">🔖 ابدأ</button>
+            <button class="btn outline sm" data-lock="بطاقات المراجعة">بطاقات اليوم 🔒</button>
+            <button class="btn outline sm" data-lock="اختبار اليوم ${arNum(d.day)}">اختبار اليوم 🔒</button>` : `<a class="btn soft sm" href="#/day/${d.day}">ابدأ</a>
             <a class="btn outline sm" href="#/cards?day=${d.day}">بطاقات اليوم</a>
-            <a class="btn outline sm" href="#/quiz-day/${d.day}">اختبار اليوم</a>
+            <a class="btn outline sm" href="#/quiz-day/${d.day}">اختبار اليوم</a>`}
           </div>
         </div>`;
       }).join('')}
@@ -611,13 +609,13 @@ function viewDay(day) {
         const checked = state.tasks[k] ? 'checked' : '';
         return `<label class="task ${checked ? 'done' : ''}">
           <input type="checkbox" data-task="${k}" ${checked}>
-          <span>${esc(t.t)} ${t.unit ? (TRIAL && t.unit !== TRIAL_UNIT_ID ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="#/unit/${t.unit}" class="small">فتح الوحدة</a>`) : (t.go ? (TRIAL ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="${esc(t.go)}" class="small">فتح القسم</a>`) : '')}</span>
+          <span>${esc(t.t)} ${t.unit ? (TRIAL && !TRIAL_PREVIEW && !TRIAL_UNITS.has(t.unit) ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="#/unit/${t.unit}" class="small">فتح الوحدة</a>`) : (t.go ? (TRIAL && !TRIAL_PREVIEW ? '<span class="lock-chip">🔒 اشترك</span>' : `<a href="${esc(t.go)}" class="small">فتح القسم</a>`) : '')}</span>
         </label>`;
       }).join('')}
     </div>
     <div class="grid" style="gap:10px">
       ${ids.map(id => {
-        if (TRIAL && id !== TRIAL_UNIT_ID) {
+        if (TRIAL && !TRIAL_PREVIEW && !TRIAL_UNITS.has(id)) {
           const u = UNITS[id];
           return `<div class="card locked-card" style="padding:14px 16px"><span class="lock-chip">🔒 اشترك</span> <b>${esc(u && u.title || id)}</b> <span class="small muted">${arNum((u && u.blocks || []).length)} أقسام</span></div>`;
         }
@@ -625,7 +623,7 @@ function viewDay(day) {
       }).join('')}
     </div>
     <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-      ${TRIAL ? `<button class="btn" data-lock="اختبار اليوم ${arNum(day)}">🔒 اختبار اليوم — ${arNum(dayQuizQuestions(day))} سؤال</button>
+      ${TRIAL && !TRIAL_PREVIEW && day !== TRIAL_UNIT_DAY ? `<button class="btn" data-lock="اختبار اليوم ${arNum(day)}">🔒 اختبار اليوم — ${arNum(dayQuizQuestions(day))} سؤال</button>
       <button class="btn outline" data-lock="بطاقات المراجعة">🔒 بطاقات اليوم</button>` : `<a class="btn" href="#/quiz-day/${day}">اختبار اليوم</a>
       <a class="btn outline" href="#/cards?day=${day}">بطاقات اليوم</a>`}
     </div>
@@ -1701,8 +1699,9 @@ window.addEventListener('hashchange', () => {
   const h = location.hash;
   if (h.startsWith('#/quiz-day/')) {
     renderSidebar();
-    if (TRIAL) return viewTrialLocked('quiz-day', h.split('/')[2]);
-    viewDayQuiz(+h.split('/')[2]);
+    const d = +h.split('/')[2];
+    if (TRIAL && d !== TRIAL_UNIT_DAY) return viewTrialLocked('quiz-day', d);
+    viewDayQuiz(d);
   }
 });
 hydrateStaticIcons();
@@ -1712,8 +1711,9 @@ if (!TRIAL && !localStorage.getItem('zoobook_auth')) {
 } else {
   renderSidebar();
   if (location.hash.startsWith('#/quiz-day/')) {
-    if (TRIAL) viewTrialLocked('quiz-day', location.hash.split('/')[2]);
-    else viewDayQuiz(+location.hash.split('/')[2]);
+    const d = +location.hash.split('/')[2];
+    if (TRIAL && d !== TRIAL_UNIT_DAY) viewTrialLocked('quiz-day', d);
+    else viewDayQuiz(d);
   } else router();
   bindTasks();
 }
