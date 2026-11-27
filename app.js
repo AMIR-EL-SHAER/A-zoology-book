@@ -5,7 +5,7 @@
 /* وضع التجربة: demo.html يفعّله قبل تحميل app.js — النسخة الكاملة ما تتأثرش */
 const TRIAL = !!window.AZOO_TRIAL;
 let TRIAL_PREVIEW = false; /* بيعرض الصفحة الأصلية كاملة بس مقفولة */
-const TRIAL_TG = 'https://t.me/+201018201045?text=';
+const TRIAL_TG = 'https://t.me/AZOOLOGY_helper_bot?text=';
 function openTrialSubscribe(what) {
   const txt = 'عايز أشترك في A-ZOOLOGY' + (what ? ' — ' + what : '');
   const url = TRIAL_TG + encodeURIComponent(txt);
@@ -46,7 +46,7 @@ const SOCIAL_LINKS = [
   ['instagram', 'إنستجرام', 'https://www.instagram.com/a_0_hub', 'ig']
 ];
 const socialBar = () => `<div class="social-bar" aria-label="وسائل التواصل">
-  ${SOCIAL_LINKS.map(([name, label, href, id]) => `<a id="${id}" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">${icon(name)}</a>`).join('')}
+  ${SOCIAL_LINKS.filter(([name]) => !(TRIAL && name === 'telegram')).map(([name, label, href, id]) => `<a id="${id}" href="${href}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">${icon(name)}</a>`).join('')}
   <span class="social-label">تابعنا</span>
 </div>`;
 function hydrateStaticIcons() {
