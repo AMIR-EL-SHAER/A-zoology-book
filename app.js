@@ -62,9 +62,11 @@ const fmtTime = s => {
 };
 
 /* ---------------- state ---------------- */
+const RATES = [0.8, 1, 1.15, 1.3, 1.5];
+const normRate = v => RATES.includes(+v) ? +v : 1;
 const defaultState = {
   done: {}, quiz: {}, exam: null, examHistory: [], pastQuiz: {}, cards: {}, tasks: {},
-  settings: { theme: 'dark', font: 17, speed: 1, autoplay: true, termDetail: true },
+  settings: { theme: 'dark', font: 17, speed: 1, autoplay: true, termDetail: true, enRate: 1, arRate: 1 },
   last: null, visited: {}, positions: {}, studyDays: {}, weak: {}
 };
 let state;
@@ -74,6 +76,8 @@ state.settings = Object.assign({}, defaultState.settings, state.settings || {});
 if (!state.settings.fontSize) state.settings.fontSize = state.settings.font <= 15 ? 'small' : state.settings.font >= 21 ? 'large' : 'medium';
 if (typeof state.settings.contrast !== 'boolean') state.settings.contrast = false;
 if (typeof state.settings.termDetail !== 'boolean') state.settings.termDetail = true;
+state.settings.enRate = normRate(state.settings.enRate);
+state.settings.arRate = normRate(state.settings.arRate);
 state.positions = state.positions || {};
 state.studyDays = state.studyDays || {};
 state.weak = state.weak || {};
@@ -1288,7 +1292,6 @@ function speakTerm(t) {
     `audio/term-${key}.mp3`
   ];
   if (state.settings.termDetail !== false) steps.push(`audio/term-def-${key}.mp3`);
-  const rate = Number(state.settings.speed) || 1;
   let i = 0;
   const queue = delay => {
     if (token !== termSeq) return;
@@ -1310,7 +1313,7 @@ function speakTerm(t) {
     try {
       termAudio.src = audioURL(src);
       termAudio.load();
-      termAudio.playbackRate = rate;
+      termAudio.playbackRate = src.includes('term-en-') ? state.settings.enRate : state.settings.arRate;
       const p = termAudio.play();
       if (p && p.catch) p.catch(err => {
         if (err && err.name === 'AbortError') return;
@@ -1395,8 +1398,14 @@ $('#settingsBtn').onclick = () => {
       <button data-d="1" class="${state.settings.termDetail ? 'on' : ''}">مع الشرح</button>
       <button data-d="0" class="${state.settings.termDetail ? '' : 'on'}">بدون شرح</button>
     </div></div>
-    <div class="setting"><span>سرعة القراءة</span><div class="seg" id="spSeg">
-      ${[0.8, 1, 1.15, 1.3, 1.5].map(n => `<button data-s="${n}" class="${state.settings.speed === n ? 'on' : ''}">${n}×</button>`).join('')}
+    <div class="setting"><span>سرعة المصطلح — إنجليزي</span><div class="seg" id="enRateSeg">
+      ${RATES.map(n => `<button data-r="${n}" class="${state.settings.enRate === n ? 'on' : ''}">${n}×</button>`).join('')}
+    </div></div>
+    <div class="setting"><span>سرعة المصطلح — عربي</span><div class="seg" id="arRateSeg">
+      ${RATES.map(n => `<button data-r="${n}" class="${state.settings.arRate === n ? 'on' : ''}">${n}×</button>`).join('')}
+    </div></div>
+    <div class="setting"><span>سرعة قراءة الوحدة</span><div class="seg" id="spSeg">
+      ${RATES.map(n => `<button data-s="${n}" class="${state.settings.speed === n ? 'on' : ''}">${n}×</button>`).join('')}
     </div></div>
     <div class="setting"><span>الوضع</span><button class="btn outline sm" id="themeInModal">${state.settings.theme === 'dark' ? 'نهاري' : 'ليلي'}</button></div>
     <div class="setting"><span>تصفير التقدم</span><button class="btn danger sm" id="resetAll">حذف كل التقدم</button></div>
@@ -1418,6 +1427,8 @@ $('#settingsBtn').onclick = () => {
   $('#contrastBtn').onclick = () => { state.settings.contrast = !state.settings.contrast; save(); applySettings(); $('#settingsBtn').click(); };
   $$('#detailSeg button').forEach(b => b.onclick = () => { state.settings.termDetail = b.dataset.d === '1'; save(); $('#settingsBtn').click(); });
   $$('#spSeg button').forEach(b => b.onclick = () => { state.settings.speed = +b.dataset.s; save(); applySettings(); $('#settingsBtn').click(); });
+  $$('#enRateSeg button').forEach(b => b.onclick = () => { state.settings.enRate = +b.dataset.r; save(); $('#settingsBtn').click(); });
+  $$('#arRateSeg button').forEach(b => b.onclick = () => { state.settings.arRate = +b.dataset.r; save(); $('#settingsBtn').click(); });
 };
 $('#modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') e.target.classList.remove('open'); });
 
