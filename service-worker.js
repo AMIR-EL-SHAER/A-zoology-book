@@ -1,4 +1,4 @@
-const CACHE = 'azoo-v15';
+const CACHE = 'azoo-v16';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll([
     './', './index.html', './app.js', './content.js', './style.css', './manifest.json'
